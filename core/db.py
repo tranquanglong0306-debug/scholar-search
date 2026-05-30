@@ -39,8 +39,8 @@ def execute_query(conn, query: str, params: tuple = ()):
     if is_pg:
         # Thay thế placeholder cho Postgres
         query = query.replace("?", "%s")
-        # Thay thế AUTOINCREMENT
-        query = query.replace("AUTOINCREMENT", "SERIAL")
+        # Thay thế AUTOINCREMENT chuẩn của Postgres
+        query = query.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
         
     cursor = conn.cursor()
     cursor.execute(query, params)
