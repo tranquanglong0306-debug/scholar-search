@@ -19,7 +19,16 @@ def _ensure_db_dir():
 
 def get_connection():
     if DATABASE_URL and psycopg2:
-        return psycopg2.connect(DATABASE_URL)
+        try:
+            # Thử thêm sslmode=require nếu chưa có
+            url = DATABASE_URL
+            if "?" not in url:
+                url += "?sslmode=require"
+            return psycopg2.connect(url)
+        except Exception as e:
+            # In thẳng lỗi ra màn hình để debug (che password)
+            error_msg = str(e).replace(DATABASE_URL.split('@')[0].split(':')[-1], "***")
+            raise Exception(f"DATABASE CONNECTION ERROR: {error_msg}")
     else:
         _ensure_db_dir()
         return sqlite3.connect(DB_PATH, check_same_thread=False)
