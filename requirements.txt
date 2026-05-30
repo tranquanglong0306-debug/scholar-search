@@ -1,0 +1,22 @@
+# requirements.txt
+# Danh sách thư viện Python cần cài đặt
+# Cài đặt bằng lệnh: pip install -r requirements.txt
+
+# ---- Giao diện Web ----
+streamlit>=1.32.0           # Framework giao diện chính
+
+# ---- HTTP Requests (gọi API) ----
+requests>=2.31.0            # Gửi HTTP requests đến các API
+
+# ---- Xử lý & Xuất dữ liệu ----
+pandas>=2.1.0               # Xử lý DataFrame, xuất CSV
+openpyxl>=3.1.2             # Xuất file Excel (.xlsx)
+
+# ---- Cấu hình môi trường ----
+python-dotenv>=1.0.0        # Đọc biến môi trường từ file .env
+
+# ---- Bảo mật & Đăng nhập ----
+bcrypt>=4.1.2               # Mã hóa mật khẩu người dùng
+
+# ---- Cơ sở dữ liệu ----
+psycopg2-binary>=2.9.9      # Driver kết nối PostgreSQL (Cloud)
