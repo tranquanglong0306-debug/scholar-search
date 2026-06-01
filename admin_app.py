@@ -2,13 +2,11 @@ import os
 from dotenv import load_dotenv
 
 # QUAN TRỌNG: load_dotenv() phải chạy TRƯỚC khi import core.db
-# vì db.py đọc DATABASE_URL ngay khi được import
 load_dotenv()
 
 import streamlit as st
 import pandas as pd
 from core.db import get_dashboard_stats, get_all_users, get_all_feedbacks, init_db
-from config import Config
 
 st.set_page_config(
     page_title="ScholarSearch CRM",
@@ -19,32 +17,11 @@ st.set_page_config(
 # Khởi tạo database nếu chưa có bảng
 init_db()
 
-# Lấy mật khẩu admin từ biến môi trường, mặc định là admin123 nếu chưa set
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
-
-def login_screen():
-    st.markdown("<h2 style='text-align: center; color: #f97316;'>🛡️ Đăng nhập Hệ thống Quản trị</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>Vui lòng nhập mật khẩu quản trị viên để tiếp tục.</p>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        pwd = st.text_input("Mật khẩu Admin:", type="password", key="admin_pwd")
-        if st.button("Đăng nhập", use_container_width=True, type="primary"):
-            if pwd == ADMIN_PASSWORD:
-                st.session_state.admin_logged_in = True
-                st.rerun()
-            else:
-                st.error("Sai mật khẩu!")
-
 def dashboard_screen():
     st.sidebar.title("🛡️ ScholarSearch CRM")
     st.sidebar.markdown("---")
     
     menu = st.sidebar.radio("Điều hướng", ["Trang chủ (Dashboard)", "Quản lý Người dùng", "Quản lý Góp ý"])
-    
-    if st.sidebar.button("Đăng xuất"):
-        st.session_state.admin_logged_in = False
-        st.rerun()
         
     st.sidebar.markdown("---")
     st.sidebar.caption("© 2026 ScholarSearch Admin Panel")
@@ -84,10 +61,4 @@ def dashboard_screen():
         else:
             st.info("Chưa có góp ý nào từ người dùng.")
 
-if "admin_logged_in" not in st.session_state:
-    st.session_state.admin_logged_in = False
-
-if not st.session_state.admin_logged_in:
-    login_screen()
-else:
-    dashboard_screen()
+dashboard_screen()
