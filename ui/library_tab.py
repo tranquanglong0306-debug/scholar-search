@@ -13,10 +13,13 @@ def _render_library_card(article: Article, index: int, citation_style: str) -> b
     """
     should_remove = False
 
+    # Tính toán delay cho hiệu ứng xuất hiện so le (giới hạn tối đa 0.4s)
+    delay = min(index * 0.05, 0.4)
+
     with st.container():
         # Header card
         st.markdown(f"""
-        <div class="article-card">
+        <div class="article-card animate-card" style="animation-delay: {delay}s;">
             <div class="article-title">
                 <span style="color:#6c63ff;font-size:0.85rem;font-weight:600;">#{index + 1}</span>
                 {'&nbsp;<a href="' + article.url + '" target="_blank">' + article.title + '</a>' if article.url else '&nbsp;' + article.title}
