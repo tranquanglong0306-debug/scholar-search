@@ -44,9 +44,12 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
             # Các nút truy cập bài báo
             actions_html = ""
             if getattr(article, "pdf_url", ""):
-                actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #ef4444; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Đọc/Tải PDF</a>"
-            if article.url:
-                actions_html += f"<a href='{article.url}' target='_blank' style='display:inline-block; margin-bottom: 8px; padding: 4px 12px; background: #3b82f6; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>🔗 Xem tại NXB (Gốc)</a>"
+                actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #ef4444; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Tải PDF (Mở)</a>"
+            
+            # Đổi link NXB thành Sci-Hub để ra PDF luôn nếu có DOI
+            direct_pdf_link = f"https://sci-hub.se/{article.doi}" if getattr(article, 'doi', '') else article.url
+            if direct_pdf_link:
+                actions_html += f"<a href='{direct_pdf_link}' target='_blank' style='display:inline-block; margin-bottom: 8px; padding: 4px 12px; background: #3b82f6; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>🔗 Xem tại NXB (Gốc)</a>"
             
             if actions_html:
                 st.markdown(f"<div>{actions_html}</div>", unsafe_allow_html=True)
