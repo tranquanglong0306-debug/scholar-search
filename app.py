@@ -58,8 +58,10 @@ st.markdown(inject_css(), unsafe_allow_html=True)
 def _init_session_state() -> None:
     """Khởi tạo các biến session state nếu chưa có."""
     if "user_id" not in st.session_state:
-        st.session_state["user_id"] = None
-        st.session_state["username"] = None
+        # Đọc phiên đăng nhập đã lưu cục bộ nếu có
+        saved_uid, saved_uname = storage.load_active_session()
+        st.session_state["user_id"] = saved_uid
+        st.session_state["username"] = saved_uname
 
     defaults = {
         "search_results": [],       # Kết quả tìm kiếm hiện tại
@@ -98,6 +100,8 @@ if st.session_state.user_id is None:
                     if user_id:
                         st.session_state.user_id = user_id
                         st.session_state.username = msg
+                        # Lưu phiên đăng nhập cục bộ
+                        storage.save_active_session(user_id, msg)
                         # Tải thư viện của user này
                         st.session_state.library = storage.load_library(user_id)
                         st.rerun()
@@ -223,6 +227,8 @@ with st.sidebar:
         st.session_state.user_id = None
         st.session_state.username = None
         st.session_state.library = []
+        # Xóa phiên đăng nhập cục bộ
+        storage.clear_active_session()
         st.rerun()
         
     st.markdown("---")
