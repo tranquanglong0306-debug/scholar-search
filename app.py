@@ -9,6 +9,7 @@
 import streamlit as st
 import sys
 import os
+import qrcode
 
 # Đảm bảo Python tìm thấy các module trong dự án
 sys.path.insert(0, os.path.dirname(__file__))
@@ -286,6 +287,28 @@ with st.sidebar:
     - [Zotero](https://www.zotero.org/)
     - [Mendeley](https://www.mendeley.com/)
     """)
+
+    st.divider()
+
+    # Phản hồi & Góp ý (QR Code)
+    st.markdown("### 💡 Góp ý & Đề xuất")
+    st.markdown("<small>Giúp ScholarSearch tốt hơn mỗi ngày!</small>", unsafe_allow_html=True)
+    
+    form_url = "HÃY_THAY_LINK_GOOGLE_FORM_CỦA_ANH_VÀO_ĐÂY"
+    try:
+        qr = qrcode.QRCode(version=1, box_size=10, border=2)
+        qr.add_data(form_url)
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Căn giữa ảnh QR
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image(qr_img.get_image(), use_container_width=True)
+    except Exception as e:
+        pass
+        
+    st.markdown(f"<p style='text-align: center; font-size: 0.9rem;'>Quét mã QR hoặc <a href='{form_url}' target='_blank'>bấm vào đây</a> để gửi góp ý!</p>", unsafe_allow_html=True)
 
     st.divider()
     st.caption(f"ScholarSearch v{Config.APP_VERSION}")
