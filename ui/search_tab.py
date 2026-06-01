@@ -46,8 +46,8 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
             if getattr(article, "pdf_url", ""):
                 actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #ef4444; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Tải PDF (Mở)</a>"
             
-            # Đổi link NXB thành Sci-Hub để ra PDF luôn nếu có DOI
-            direct_pdf_link = f"https://sci-hub.se/{article.doi}" if getattr(article, 'doi', '') else article.url
+            # Đổi link NXB thành Sci-Hub để ra PDF luôn nếu có DOI. Đổi sang domain .ru để tránh bị nhà mạng block.
+            direct_pdf_link = f"https://sci-hub.ru/{article.doi}" if getattr(article, 'doi', '') else article.url
             if direct_pdf_link:
                 actions_html += f"<a href='{direct_pdf_link}' target='_blank' style='display:inline-block; margin-bottom: 8px; padding: 4px 12px; background: #3b82f6; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>🔗 Xem tại NXB (Gốc)</a>"
             
