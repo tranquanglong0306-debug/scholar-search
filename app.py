@@ -194,9 +194,27 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ---------------------------------------------------------------
+# Mục Ủng hộ (Donate)
+# ---------------------------------------------------------------
+with st.expander("💖 Ủng hộ ScholarSearch", expanded=False):
+    st.markdown("""
+    **Website này được duy trì hoàn toàn miễn phí cho cộng đồng.** Tuy nhiên, các tính năng tích hợp AI (như tóm tắt bài viết) đòi hỏi chi phí vận hành và duy trì server mỗi tháng.
+    
+    Nếu bạn yêu thích công cụ này và muốn ủng hộ tác giả duy trì nó "chậm mà chắc", bạn có thể donate tùy hỷ qua mã QR bên dưới. Cảm ơn bạn đã tiếp sức cho ScholarSearch!
+    """)
+    qr_path = os.path.join(os.path.dirname(__file__), "assets", "qr_donate.jpg")
+    qr_path_png = os.path.join(os.path.dirname(__file__), "assets", "qr_donate.png")
+    
+    if os.path.exists(qr_path):
+        st.image(qr_path, width=300)
+    elif os.path.exists(qr_path_png):
+        st.image(qr_path_png, width=300)
+    else:
+        st.info("💡 Hướng dẫn cho Admin: Hãy copy file ảnh mã QR của bạn vào thư mục `assets/` và đổi tên thành `qr_donate.jpg` hoặc `qr_donate.png` để hiển thị ảnh QR tại đây.")
 
 # ---------------------------------------------------------------
-# Giao diện chính (khi đã đăng nhập)
+# Tabs chính
 # ---------------------------------------------------------------
 
 with st.sidebar:
