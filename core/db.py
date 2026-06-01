@@ -264,3 +264,43 @@ def save_feedback(user_id: int, username: str, content: str) -> bool:
         return False
     finally:
         conn.close()
+
+# ---------------------------------------------------------------
+# Chức năng dành cho Quản trị viên (Admin CRM)
+# ---------------------------------------------------------------
+
+def get_dashboard_stats() -> dict:
+    conn = get_connection()
+    try:
+        cursor = execute_query(conn, "SELECT COUNT(id) FROM users")
+        total_users = cursor.fetchone()[0] or 0
+        
+        cursor = execute_query(conn, "SELECT COUNT(id) FROM feedbacks")
+        total_feedbacks = cursor.fetchone()[0] or 0
+        
+        cursor = execute_query(conn, "SELECT COUNT(id) FROM search_history")
+        total_searches = cursor.fetchone()[0] or 0
+        
+        return {
+            "users": total_users,
+            "feedbacks": total_feedbacks,
+            "searches": total_searches
+        }
+    finally:
+        conn.close()
+
+def get_all_users() -> list:
+    conn = get_connection()
+    try:
+        cursor = execute_query(conn, "SELECT id, username, email, created_at FROM users ORDER BY created_at DESC")
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+def get_all_feedbacks() -> list:
+    conn = get_connection()
+    try:
+        cursor = execute_query(conn, "SELECT id, username, content, created_at FROM feedbacks ORDER BY created_at DESC")
+        return cursor.fetchall()
+    finally:
+        conn.close()
