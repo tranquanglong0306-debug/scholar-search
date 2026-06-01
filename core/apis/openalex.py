@@ -155,7 +155,7 @@ def search_by_keyword(
     params = _build_mailto_param()
     params.update({
         "search": query,
-        "per-page": min(limit, 50),
+        "per-page": min(limit, 100),
         "select": "id,title,authorships,publication_year,abstract_inverted_index,"
                   "primary_location,biblio,doi,cited_by_count,concepts,type,open_access",
         "sort": "relevance_score:desc",
@@ -210,7 +210,7 @@ def search_by_author(author_name: str, limit: int = 20) -> SearchResult:
     params = _build_mailto_param()
     params.update({
         "filter": f"authorships.author.display_name.search:{author_name}",
-        "per-page": min(limit, 50),
+        "per-page": min(limit, 100),
         "select": "id,title,authorships,publication_year,abstract_inverted_index,"
                   "primary_location,biblio,doi,cited_by_count,concepts,type,open_access",
         "sort": "cited_by_count:desc",

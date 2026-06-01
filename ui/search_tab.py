@@ -151,8 +151,8 @@ def render_search_tab() -> None:
             year_to = st.number_input("Đến năm", min_value=1900, max_value=2026,
                                        value=2026, step=1, key="year_to")
         with f_col3:
-            limit = st.slider("Số kết quả", min_value=5, max_value=50,
-                               value=20, step=5, key="result_limit")
+            limit = st.slider("Số kết quả", min_value=10, max_value=100,
+                               value=50, step=10, key="result_limit")
         with f_col4:
             citation_style = st.selectbox(
                 "Định dạng trích dẫn",
