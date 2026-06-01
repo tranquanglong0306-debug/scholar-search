@@ -99,9 +99,11 @@ def search(
     filtered_articles = []
     for article in result.articles:
         # Gắn nhãn chuẩn
-        is_scopus, is_wos = indexing_check.check_indexing(article.journal, article.issn if hasattr(article, 'issn') else None)
+        is_scopus, scopus_q, is_wos, wos_q = indexing_check.check_indexing(article.journal, article.issn if hasattr(article, 'issn') else None)
         article.is_scopus = is_scopus
+        article.scopus_q = scopus_q
         article.is_wos = is_wos
+        article.wos_q = wos_q
         
         # Lọc theo yêu cầu
         if indexing_filter == "Scopus" and not is_scopus:

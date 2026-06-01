@@ -20,8 +20,11 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
         # Tiêu đề bài báo (Sử dụng thẻ <a> HTML thay vì Markdown vì nó nằm trong block HTML)
         title_link = f"<a href='{article.url}' target='_blank'>{article.title}</a>" if article.url else article.title
         # Xây dựng các thẻ HTML cẩn thận để tránh lỗi khoảng trắng của Streamlit Markdown
-        scopus_badge = '<span class="meta-badge" style="background:#f97316; color:white;">🌟 Scopus</span>' if getattr(article, 'is_scopus', False) else ''
-        wos_badge = '<span class="meta-badge" style="background:#8b5cf6; color:white;">🏆 WoS</span>' if getattr(article, 'is_wos', False) else ''
+        scopus_text = f"🌟 Scopus ({getattr(article, 'scopus_q')})" if getattr(article, 'scopus_q', '').strip() else "🌟 Scopus"
+        wos_text = f"🏆 WoS ({getattr(article, 'wos_q')})" if getattr(article, 'wos_q', '').strip() else "🏆 WoS"
+        
+        scopus_badge = f'<span class="meta-badge" style="background:#f97316; color:white;">{scopus_text}</span>' if getattr(article, 'is_scopus', False) else ''
+        wos_badge = f'<span class="meta-badge" style="background:#8b5cf6; color:white;">{wos_text}</span>' if getattr(article, 'is_wos', False) else ''
         oa_badge = '<span class="meta-badge" style="background:#10b981; color:white; font-weight:bold;">🟢 MIỄN PHÍ</span>' if getattr(article, 'is_open_access', False) else '<span class="meta-badge" style="background:#ef4444; color:white; font-weight:bold;">🔒 TRẢ PHÍ (PAYWALL)</span>'
         journal_html = f'<div class="article-journal">📰 {article.journal}</div>' if article.journal else ''
         tags_html = ('<div class="tag-cloud">' + ''.join(f'<span class="tag">{f}</span>' for f in article.fields_of_study[:4]) + '</div>') if article.fields_of_study else ''
