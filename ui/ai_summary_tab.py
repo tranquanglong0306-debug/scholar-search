@@ -4,6 +4,9 @@ from core.ai_service import summarize_article
 FREE_LIMIT = 3
 
 def render_ai_summary_tab():
+    if "ai_summary_result" not in st.session_state:
+        st.session_state.ai_summary_result = None
+
     st.markdown("### 🤖 Trợ lý AI Tóm tắt Bài báo")
     st.markdown("Dán nội dung bài báo khoa học của bạn vào đây để AI đọc, phân tích và trích xuất những ý chính quan trọng nhất chỉ trong vài giây.")
     
@@ -36,11 +39,18 @@ def render_ai_summary_tab():
                 st.session_state.summary_usage_count += 1
                 
                 with st.spinner("🤖 Trí tuệ nhân tạo Gemini đang đọc và tổng hợp thông tin..."):
-                    summary_result = summarize_article(article_text)
-                
-                st.success("✅ Tóm tắt thành công!")
-                st.markdown("#### 📑 Kết quả Tóm tắt:")
-                st.info(summary_result)
+                    st.session_state.ai_summary_result = summarize_article(article_text)
                 
                 # Cập nhật lại UI ngay lập tức để trừ đi 1 lượt hiển thị
                 st.rerun()
+
+    # Hiển thị kết quả tóm tắt nếu có trong session_state
+    if st.session_state.ai_summary_result:
+        st.markdown("---")
+        st.success("✅ Tóm tắt thành công!")
+        st.markdown("#### 📑 Kết quả Tóm tắt:")
+        st.info(st.session_state.ai_summary_result)
+        
+        if st.button("🧹 Xóa kết quả"):
+            st.session_state.ai_summary_result = None
+            st.rerun()
