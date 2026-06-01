@@ -187,9 +187,9 @@ if "library" not in st.session_state:
 st.markdown("""
 <div class="scholar-header">
     <h1>🎓 ScholarSearch</h1>
-    <p>Công cụ tìm kiếm bài báo khoa học & quản lý trích dẫn cho Luận văn Thạc sĩ</p>
+    <p>Công cụ tìm kiếm bài báo khoa học & quản lý trích dẫn cho Luận văn</p>
     <p style="margin-top:0.4rem; font-size:0.8rem; opacity:0.5;">
-        Ngôn ngữ học ứng dụng · Giáo dục · Second Language Acquisition
+        Nghiên cứu khoa học · Đồ án tốt nghiệp · Công bố quốc tế
     </p>
 </div>
 """, unsafe_allow_html=True)
