@@ -1,11 +1,14 @@
+import os
+from dotenv import load_dotenv
+
+# QUAN TRỌNG: load_dotenv() phải chạy TRƯỚC khi import core.db
+# vì db.py đọc DATABASE_URL ngay khi được import
+load_dotenv()
+
 import streamlit as st
 import pandas as pd
 from core.db import get_dashboard_stats, get_all_users, get_all_feedbacks, init_db
 from config import Config
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 st.set_page_config(
     page_title="ScholarSearch CRM",
