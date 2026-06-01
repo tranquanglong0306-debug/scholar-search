@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from core.db import get_dashboard_stats, get_all_users, get_all_feedbacks
+from core.db import get_dashboard_stats, get_all_users, get_all_feedbacks, init_db
 from config import Config
 import os
 from dotenv import load_dotenv
@@ -12,6 +12,9 @@ st.set_page_config(
     page_icon="🛡️",
     layout="wide"
 )
+
+# Khởi tạo database nếu chưa có bảng
+init_db()
 
 # Lấy mật khẩu admin từ biến môi trường, mặc định là admin123 nếu chưa set
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
