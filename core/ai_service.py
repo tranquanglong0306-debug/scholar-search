@@ -10,8 +10,8 @@ def summarize_article(text: str) -> str:
     try:
         genai.configure(api_key=Config.GEMINI_API_KEY)
         
-        # Sử dụng mô hình gemini-1.5-flash cho tốc độ nhanh và chính xác
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Sử dụng mô hình gemini-2.5-flash cho tốc độ nhanh và chính xác
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""Bạn là một chuyên gia nghiên cứu học thuật. Hãy đọc và tóm tắt bài báo khoa học (hoặc Abstract) sau đây một cách súc tích, chuyên nghiệp bằng tiếng Việt.
 
