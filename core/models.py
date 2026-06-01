@@ -79,6 +79,50 @@ class Article:
     def display_year(self) -> str:
         return str(self.year) if self.year else "n.d."
 
+    @property
+    def direct_pdf_url(self) -> str:
+        """
+        Chuyển đổi các link Open Access trung gian (như arXiv abs, CORE reader, v.v.)
+        thành link trực tiếp tải file PDF nếu khớp với các mẫu phổ biến.
+        """
+        if not self.pdf_url:
+            return ""
+            
+        url = self.pdf_url.strip()
+        
+        # 1. Xử lý arXiv (abs -> pdf)
+        if "arxiv.org/abs/" in url:
+            url = url.replace("/abs/", "/pdf/")
+            if not url.endswith(".pdf"):
+                url += ".pdf"
+            return url
+            
+        # 2. Xử lý CORE.ac.uk (display/reader -> download/pdf)
+        if "core.ac.uk/display/" in url or "core.ac.uk/reader/" in url:
+            import re
+            match = re.search(r"core\.ac\.uk/(?:display|reader)/(\d+)", url)
+            if match:
+                core_id = match.group(1)
+                return f"https://core.ac.uk/download/pdf/{core_id}.pdf"
+                
+        # 3. Xử lý PubMed Central (PMC)
+        if "ncbi.nlm.nih.gov/pmc/articles/PMC" in url:
+            import re
+            match = re.search(r"(PMC\d+)", url)
+            if match:
+                pmcid = match.group(1)
+                return f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/"
+                
+        # 4. Xử lý Europe PMC
+        if "europepmc.org/article/PMC/" in url:
+            import re
+            match = re.search(r"PMC\d+", url)
+            if match:
+                pmcid = match.group(0)
+                return f"https://europepmc.org/backend/ptpmcrender.fcgi?accid={pmcid}&blobtype=pdf"
+                
+        return url
+
     def to_dict(self) -> dict:
         """Chuyển đổi thành dict để lưu vào DataFrame / CSV."""
         return {

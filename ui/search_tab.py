@@ -18,7 +18,7 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
 
     with st.container():
         # Tiêu đề bài báo (Nếu là bản free, ưu tiên link PDF trực tiếp khi click vào tiêu đề)
-        target_url = article.pdf_url if getattr(article, "pdf_url", "") else article.url
+        target_url = article.direct_pdf_url if getattr(article, "pdf_url", "") else article.url
         title_link = f"<a href='{target_url}' target='_blank'>{article.title}</a>" if target_url else article.title
         # Xây dựng các thẻ HTML cẩn thận để tránh lỗi khoảng trắng của Streamlit Markdown
         scopus_text = f"🌟 Scopus ({getattr(article, 'scopus_q')})" if getattr(article, 'scopus_q', '').strip() else "🌟 Scopus"
@@ -51,9 +51,14 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
         with col_abs:
             # Các nút truy cập bài báo
             actions_html = ""
-            if getattr(article, "pdf_url", ""):
-                # PDF mở (màu xanh lá cây sang trọng)
-                actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #10b981; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Tải PDF (Miễn phí)</a>"
+            pdf_link = article.direct_pdf_url
+            if pdf_link:
+                # Kiểm tra xem link có phải direct PDF hay không
+                lower_url = pdf_link.lower()
+                is_direct_pdf = (".pdf" in lower_url or "/pdf/" in lower_url or "/pdf" in lower_url or "download" in lower_url or "bitstream" in lower_url)
+                btn_label = "📥 Tải PDF (Trực tiếp)" if is_direct_pdf else "🔓 Xem bản Free (Kho lưu trữ)"
+                btn_bg = "#10b981" if is_direct_pdf else "#fb923c"
+                actions_html += f"<a href='{pdf_link}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: {btn_bg}; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>{btn_label}</a>"
             
             # Luôn hiển thị link NXB gốc (qua DOI hoặc URL)
             original_url = f"https://doi.org/{article.doi}" if getattr(article, 'doi', '') else article.url

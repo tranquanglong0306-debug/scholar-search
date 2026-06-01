@@ -22,7 +22,7 @@ def _render_library_card(article: Article, index: int, citation_style: str) -> b
         <div class="article-card animate-card" style="animation-delay: {delay}s;">
             <div class="article-title">
                 <span style="color:#6c63ff;font-size:0.85rem;font-weight:600;">#{index + 1}</span>
-                {f'&nbsp;<a href="{article.pdf_url if getattr(article, "pdf_url", "") else article.url}" target="_blank">{article.title}</a>' if (getattr(article, "pdf_url", "") or article.url) else f'&nbsp;{article.title}'}
+                {f'&nbsp;<a href="{article.direct_pdf_url if getattr(article, "pdf_url", "") else article.url}" target="_blank">{article.title}</a>' if (getattr(article, "pdf_url", "") or article.url) else f'&nbsp;{article.title}'}
             </div>
             <div class="article-meta">
                 <span class="meta-badge badge-year">📅 {article.display_year}</span>
@@ -40,9 +40,14 @@ def _render_library_card(article: Article, index: int, citation_style: str) -> b
         with col_cite:
             # Các nút truy cập bài báo
             actions_html = ""
-            if getattr(article, "pdf_url", ""):
-                # PDF mở (màu xanh lá cây sang trọng)
-                actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #10b981; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Tải PDF (Miễn phí)</a>"
+            pdf_link = article.direct_pdf_url
+            if pdf_link:
+                # Kiểm tra xem link có phải direct PDF hay không
+                lower_url = pdf_link.lower()
+                is_direct_pdf = (".pdf" in lower_url or "/pdf/" in lower_url or "/pdf" in lower_url or "download" in lower_url or "bitstream" in lower_url)
+                btn_label = "📥 Tải PDF (Trực tiếp)" if is_direct_pdf else "🔓 Xem bản Free (Kho lưu trữ)"
+                btn_bg = "#10b981" if is_direct_pdf else "#fb923c"
+                actions_html += f"<a href='{pdf_link}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: {btn_bg}; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>{btn_label}</a>"
             
             # Luôn hiển thị link NXB gốc (qua DOI hoặc URL)
             original_url = f"https://doi.org/{article.doi}" if getattr(article, 'doi', '') else article.url
