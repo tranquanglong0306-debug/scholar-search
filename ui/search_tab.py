@@ -29,8 +29,8 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
         journal_html = f'<div class="article-journal">📰 {article.journal}</div>' if article.journal else ''
         tags_html = ('<div class="tag-cloud">' + ''.join(f'<span class="tag">{f}</span>' for f in article.fields_of_study[:4]) + '</div>') if article.fields_of_study else ''
 
-        # Tính toán delay cho hiệu ứng xuất hiện so le (giới hạn tối đa 0.4s để tránh trễ nhiều)
-        delay = min(index * 0.05, 0.4)
+        # Tính toán delay cho hiệu ứng xuất hiện so le tối ưu (12ms/card, tối đa 150ms)
+        delay = min(index * 0.012, 0.15)
 
         html_content = (
             f'<div class="article-card animate-card" style="animation-delay: {delay}s;">'
@@ -51,15 +51,55 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
             # Các nút truy cập bài báo
             actions_html = ""
             if getattr(article, "pdf_url", ""):
-                actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #ef4444; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Tải PDF (Mở)</a>"
+                # PDF mở (màu xanh lá cây sang trọng)
+                actions_html += f"<a href='{article.pdf_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #10b981; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>📥 Tải PDF (Miễn phí)</a>"
             
-            # Đổi link NXB thành Sci-Hub để ra PDF luôn nếu có DOI. Đổi sang domain .ru để tránh bị nhà mạng block.
-            direct_pdf_link = f"https://sci-hub.ru/{article.doi}" if getattr(article, 'doi', '') else article.url
-            if direct_pdf_link:
-                actions_html += f"<a href='{direct_pdf_link}' target='_blank' style='display:inline-block; margin-bottom: 8px; padding: 4px 12px; background: #3b82f6; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>🔗 Xem tại NXB (Gốc)</a>"
+            # Luôn hiển thị link NXB gốc (qua DOI hoặc URL)
+            original_url = f"https://doi.org/{article.doi}" if getattr(article, 'doi', '') else article.url
+            if original_url:
+                actions_html += f"<a href='{original_url}' target='_blank' style='display:inline-block; margin-right: 10px; margin-bottom: 8px; padding: 4px 12px; background: #3b82f6; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>🌐 Xem tại NXB (Gốc)</a>"
+            
+            # Logic mở khóa qua Sci-Hub / Cảnh báo bài viết trả phí mới
+            scihub_info = ""
+            is_paywalled = not getattr(article, "pdf_url", "")
+            if is_paywalled:
+                if getattr(article, "doi", ""):
+                    year_val = article.year
+                    if year_val and year_val >= 2022:
+                        import urllib.parse
+                        encoded_title = urllib.parse.quote(article.title)
+                        gs_url = f"https://scholar.google.com/scholar?q={encoded_title}"
+                        rg_url = f"https://www.researchgate.net/search.Search.html?query={encoded_title}&type=publication"
+                        scihub_info = (
+                            f"<div style='margin-top: 8px; padding: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; font-size: 0.85rem; color: #f87171; line-height:1.5;'>"
+                            f"⚠️ <strong>Bài viết có phí ({article.display_year}):</strong> Do Sci-Hub đã ngừng cập nhật từ năm 2022, tài liệu này chưa có sẵn trên Sci-Hub.<br>"
+                            f"💡 Bạn có thể tìm bản miễn phí (nháp/preprint) qua: "
+                            f"<a href='{gs_url}' target='_blank' style='color:#a78bfa; text-decoration:underline; font-weight:500;'>Google Scholar</a> hoặc "
+                            f"<a href='{rg_url}' target='_blank' style='color:#a78bfa; text-decoration:underline; font-weight:500;'>ResearchGate</a>"
+                            f"</div>"
+                        )
+                    else:
+                        scihub_url = f"https://sci-hub.ru/{article.doi}"
+                        actions_html += f"<a href='{scihub_url}' target='_blank' style='display:inline-block; margin-bottom: 8px; padding: 4px 12px; background: #8b5cf6; color: white; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;'>🔑 Mở khóa qua Sci-Hub</a>"
+                        scihub_info = f"<div style='font-size:0.78rem; color:var(--text-muted); margin-top:4px;'>*(Sci-Hub chỉ hỗ trợ tài liệu xuất bản trước năm 2022)*</div>"
+                else:
+                    import urllib.parse
+                    encoded_title = urllib.parse.quote(article.title)
+                    gs_url = f"https://scholar.google.com/scholar?q={encoded_title}"
+                    rg_url = f"https://www.researchgate.net/search.Search.html?query={encoded_title}&type=publication"
+                    scihub_info = (
+                        f"<div style='margin-top: 8px; padding: 10px; background: rgba(251, 146, 60, 0.10); border: 1px solid rgba(251, 146, 60, 0.25); border-radius: 6px; font-size: 0.85rem; color: #fb923c; line-height:1.5;'>"
+                        f"⚠️ Bài báo trả phí này không có mã DOI để mở khóa tự động qua Sci-Hub.<br>"
+                        f"💡 Thử tìm kiếm bản copy miễn phí tại: "
+                        f"<a href='{gs_url}' target='_blank' style='color:#a78bfa; text-decoration:underline; font-weight:500;'>Google Scholar</a> | "
+                        f"<a href='{rg_url}' target='_blank' style='color:#a78bfa; text-decoration:underline; font-weight:500;'>ResearchGate</a>"
+                        f"</div>"
+                    )
             
             if actions_html:
                 st.markdown(f"<div>{actions_html}</div>", unsafe_allow_html=True)
+            if scihub_info:
+                st.markdown(scihub_info, unsafe_allow_html=True)
 
             if article.has_abstract:
                 with st.expander("📖 Xem tóm tắt (Abstract)", expanded=False):
@@ -155,7 +195,7 @@ def render_search_tab() -> None:
                                        value=2026, step=1, key="year_to")
         with f_col3:
             limit = st.slider("Số kết quả", min_value=10, max_value=100,
-                               value=50, step=10, key="result_limit")
+                               value=100, step=10, key="result_limit")
         with f_col4:
             citation_style = st.selectbox(
                 "Định dạng trích dẫn",
@@ -226,10 +266,16 @@ def render_search_tab() -> None:
 
     if articles:
         total = st.session_state.get("search_total", len(articles))
+        scopus_count = sum(1 for a in articles if getattr(a, "is_scopus", False))
+        wos_count = sum(1 for a in articles if getattr(a, "is_wos", False))
+        oa_count = sum(1 for a in articles if getattr(a, "is_open_access", False))
         st.markdown(f"""
         <div class="stats-bar">
             <span class="stat-item">🔎 Truy vấn: <strong class="stat-number">«{st.session_state.last_query}»</strong></span>
             <span class="stat-item">📄 Hiển thị: <strong class="stat-number">{len(articles)}</strong> / {total:,} kết quả</span>
+            <span class="stat-item">🌟 Scopus: <strong class="stat-number">{scopus_count}</strong></span>
+            <span class="stat-item">🏆 WoS: <strong class="stat-number">{wos_count}</strong></span>
+            <span class="stat-item">🟢 Open Access: <strong class="stat-number">{oa_count}</strong></span>
             <span class="stat-item">📚 Đã lưu: <strong class="stat-number">{len(st.session_state.get('library', []))}</strong></span>
         </div>
         """, unsafe_allow_html=True)

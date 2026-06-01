@@ -34,12 +34,12 @@ CUSTOM_CSS = """
 }
 
 /* ============================================================
-   Animations & Keyframes
+   Animations & Keyframes (Optimized for Snappier/Smoother Feel)
    ============================================================ */
 @keyframes cardEntrance {
     from {
         opacity: 0;
-        transform: translateY(24px);
+        transform: translateY(12px); /* Giảm từ 24px xuống 12px cho cảm giác trượt nhẹ nhàng hơn */
     }
     to {
         opacity: 1;
@@ -50,7 +50,7 @@ CUSTOM_CSS = """
 @keyframes pageFadeIn {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
     }
     to {
         opacity: 1;
@@ -78,11 +78,11 @@ html, body, .stApp {
     color: var(--text-primary) !important;
 }
 
-/* Page fade-in effect to soften Streamlit's full-page rerun flickers */
+/* Page fade-in effect - Optimized to 0.35s for lightning responsiveness */
 .main .block-container {
     padding: 1.5rem 2rem 3rem !important;
     max-width: 1200px !important;
-    animation: pageFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: pageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ============================================================
@@ -151,7 +151,7 @@ html, body, .stApp {
     background: var(--bg-card-hover);
     border-color: var(--accent-primary);
     box-shadow: var(--shadow-card-hover), 0 0 0 1px rgba(108,99,255,0.1);
-    transform: translateY(-4px);
+    transform: translateY(-3px);
 }
 
 .article-card::before {
@@ -171,7 +171,7 @@ html, body, .stApp {
 /* Class to trigger staggered fade-in of cards */
 .animate-card {
     opacity: 0;
-    animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .article-title {
@@ -287,7 +287,7 @@ html, body, .stApp {
    ============================================================ */
 .stats-bar {
     display: flex;
-    gap: 1rem;
+    gap: 1.25rem;
     padding: 0.75rem 1.25rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);

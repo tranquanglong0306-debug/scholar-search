@@ -18,6 +18,9 @@ class Config:
     # Google Gemini API
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
+    # Anthropic Claude API
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+
     # Semantic Scholar — Đăng ký miễn phí tại:
     # https://www.semanticscholar.org/product/api
     # Không cần key vẫn dùng được, nhưng giới hạn 100 req/5min
