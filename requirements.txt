@@ -24,3 +24,6 @@ psycopg2-binary>=2.9.9      # Driver kết nối PostgreSQL (Cloud)
 # ---- Hình ảnh & QR Code ----
 qrcode>=7.4.2               # Trình tạo mã QR
 Pillow>=10.2.0              # Xử lý hình ảnh
+
+# ---- AI & LLMs ----
+google-generativeai>=0.4.0  # Tích hợp Google Gemini API

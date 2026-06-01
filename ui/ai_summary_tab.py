@@ -1,12 +1,7 @@
 import streamlit as st
-import time
+from core.ai_service import summarize_article
 
 FREE_LIMIT = 3
-
-def mock_ai_summary(text: str) -> str:
-    """Hàm giả lập gọi AI tóm tắt"""
-    time.sleep(1.5)  # Giả lập delay API
-    return f"**Đây là bản tóm tắt tự động bằng AI** cho đoạn văn bản dài {len(text)} ký tự của bạn.\n\n_\"Bài báo tập trung thảo luận về các vấn đề cốt lõi trong lĩnh vực nghiên cứu, đề xuất một phương pháp tiếp cận mới nhằm tối ưu hóa kết quả và đưa ra những số liệu thực nghiệm chứng minh tính hiệu quả của mô hình.\"_"
 
 def render_ai_summary_tab():
     st.markdown("### 🤖 Trợ lý AI Tóm tắt Bài báo")
@@ -40,8 +35,8 @@ def render_ai_summary_tab():
                 # Tăng biến đếm
                 st.session_state.summary_usage_count += 1
                 
-                with st.spinner("🤖 AI đang đọc và tổng hợp thông tin..."):
-                    summary_result = mock_ai_summary(article_text)
+                with st.spinner("🤖 Trí tuệ nhân tạo Gemini đang đọc và tổng hợp thông tin..."):
+                    summary_result = summarize_article(article_text)
                 
                 st.success("✅ Tóm tắt thành công!")
                 st.markdown("#### 📑 Kết quả Tóm tắt:")
