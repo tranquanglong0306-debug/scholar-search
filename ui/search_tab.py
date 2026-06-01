@@ -25,13 +25,15 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
         journal_html = f'<div class="article-journal">📰 {article.journal}</div>' if article.journal else ''
         tags_html = ('<div class="tag-cloud">' + ''.join(f'<span class="tag">{f}</span>' for f in article.fields_of_study[:4]) + '</div>') if article.fields_of_study else ''
 
-        html_content = f'''<div class="article-card">
-            <div class="article-title">{title_link}</div>
-            <div class="article-meta"><span class="meta-badge badge-year">📅 {article.display_year}</span><span class="meta-badge badge-source">🔍 {article.source}</span><span class="meta-badge badge-citations">📚 {article.citation_count:,} citations</span>{scopus_badge}{wos_badge}</div>
-            <div class="article-authors">👤 {article.authors_str}</div>
-            {journal_html}
-            {tags_html}
-        </div>'''
+        html_content = (
+            f'<div class="article-card">'
+            f'<div class="article-title">{title_link}</div>'
+            f'<div class="article-meta"><span class="meta-badge badge-year">📅 {article.display_year}</span><span class="meta-badge badge-source">🔍 {article.source}</span><span class="meta-badge badge-citations">📚 {article.citation_count:,} citations</span>{scopus_badge}{wos_badge}</div>'
+            f'<div class="article-authors">👤 {article.authors_str}</div>'
+            f'{journal_html}'
+            f'{tags_html}'
+            f'</div>'
+        )
         
         st.markdown(html_content, unsafe_allow_html=True)
 
