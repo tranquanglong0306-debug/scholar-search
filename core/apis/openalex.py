@@ -116,6 +116,7 @@ def _parse_article(work: dict) -> Article:
     # Open Access PDF
     open_access = work.get("open_access", {})
     pdf_url = open_access.get("oa_url") or ""
+    is_open_access = open_access.get("is_oa", bool(pdf_url))
 
     return Article(
         title=title,
@@ -130,6 +131,7 @@ def _parse_article(work: dict) -> Article:
         doi=doi_clean,
         url=url,
         pdf_url=pdf_url,
+        is_open_access=is_open_access,
         openalex_id=work.get("id", ""),
         citation_count=citation_count,
         fields_of_study=fields,
@@ -155,7 +157,7 @@ def search_by_keyword(
         "search": query,
         "per-page": min(limit, 50),
         "select": "id,title,authorships,publication_year,abstract_inverted_index,"
-                  "primary_location,biblio,doi,cited_by_count,concepts,type",
+                  "primary_location,biblio,doi,cited_by_count,concepts,type,open_access",
         "sort": "relevance_score:desc",
     })
 
@@ -210,7 +212,7 @@ def search_by_author(author_name: str, limit: int = 20) -> SearchResult:
         "filter": f"authorships.author.display_name.search:{author_name}",
         "per-page": min(limit, 50),
         "select": "id,title,authorships,publication_year,abstract_inverted_index,"
-                  "primary_location,biblio,doi,cited_by_count,concepts,type",
+                  "primary_location,biblio,doi,cited_by_count,concepts,type,open_access",
         "sort": "cited_by_count:desc",
     })
 
@@ -252,7 +254,7 @@ def search_by_doi(doi: str) -> SearchResult:
     params = _build_mailto_param()
     params["filter"] = f"doi:{doi_url}"
     params["select"] = ("id,title,authorships,publication_year,abstract_inverted_index,"
-                        "primary_location,biblio,doi,cited_by_count,concepts,type")
+                        "primary_location,biblio,doi,cited_by_count,concepts,type,open_access")
 
     try:
         response = requests.get(

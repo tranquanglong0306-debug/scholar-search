@@ -18,6 +18,7 @@ class Article:
     # Chuẩn đánh giá (Scopus / Web of Science)
     is_scopus: bool = False
     is_wos: bool = False
+    is_open_access: bool = False
 
     # Thông tin cơ bản
     title: str = ""

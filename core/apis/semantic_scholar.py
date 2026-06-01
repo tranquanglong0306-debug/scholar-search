@@ -23,6 +23,7 @@ _FIELDS = ",".join([
     "fieldsOfStudy",
     "url",
     "openAccessPdf",
+    "isOpenAccess",
     "publicationTypes",
     "publicationDate",
 ])
@@ -68,6 +69,7 @@ def _parse_article(raw: dict) -> Article:
     # Extract Open Access PDF if available
     open_access = raw.get("openAccessPdf") or {}
     pdf_url = open_access.get("url", "")
+    is_open_access = raw.get("isOpenAccess", bool(pdf_url))
 
     return Article(
         title=raw.get("title", "Untitled"),
@@ -82,6 +84,7 @@ def _parse_article(raw: dict) -> Article:
         semantic_scholar_id=raw.get("paperId", ""),
         url=raw.get("url", ""),
         pdf_url=pdf_url,
+        is_open_access=is_open_access,
         citation_count=raw.get("citationCount", 0),
         fields_of_study=raw.get("fieldsOfStudy") or [],
         source="Semantic Scholar",
