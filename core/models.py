@@ -15,6 +15,10 @@ class Article:
     # Định danh nội bộ (tự động tạo)
     internal_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
 
+    # Chuẩn đánh giá (Scopus / Web of Science)
+    is_scopus: bool = False
+    is_wos: bool = False
+
     # Thông tin cơ bản
     title: str = ""
     authors: List[str] = field(default_factory=list)

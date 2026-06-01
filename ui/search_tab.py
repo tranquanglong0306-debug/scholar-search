@@ -26,6 +26,8 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
                 <span class="meta-badge badge-year">📅 {article.display_year}</span>
                 <span class="meta-badge badge-source">🔍 {article.source}</span>
                 <span class="meta-badge badge-citations">📚 {article.citation_count:,} citations</span>
+                {'<span class="meta-badge" style="background:#f97316; color:white;">🌟 Scopus</span>' if getattr(article, 'is_scopus', False) else ''}
+                {'<span class="meta-badge" style="background:#8b5cf6; color:white;">🏆 WoS</span>' if getattr(article, 'is_wos', False) else ''}
             </div>
             <div class="article-authors">👤 {article.authors_str}</div>
             {'<div class="article-journal">📰 ' + article.journal + '</div>' if article.journal else ''}
@@ -134,7 +136,7 @@ def render_search_tab() -> None:
     # Bộ lọc nâng cao (collapsible)
     # ---------------------------------------------------------------
     with st.expander("⚙️ Bộ lọc nâng cao", expanded=False):
-        f_col1, f_col2, f_col3, f_col4 = st.columns(4)
+        f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns([1, 1, 1, 1.2, 1.2])
         with f_col1:
             year_from = st.number_input("Từ năm", min_value=1900, max_value=2026,
                                          value=2000, step=1, key="year_from")
@@ -149,6 +151,12 @@ def render_search_tab() -> None:
                 "Định dạng trích dẫn",
                 options=get_available_styles(),
                 key="citation_style_search",
+            )
+        with f_col5:
+            indexing_filter = st.selectbox(
+                "Chuẩn quốc tế",
+                options=["Tất cả", "Scopus", "Web of Science"],
+                key="indexing_filter",
             )
 
         # Lĩnh vực mặc định cho Applied Linguistics
@@ -180,6 +188,7 @@ def render_search_tab() -> None:
                 year_from=int(year_from) if year_from else None,
                 year_to=int(year_to) if year_to else None,
                 fields_of_study=fields_input.strip() or None,
+                indexing_filter=indexing_filter,
             )
 
             if result.success:

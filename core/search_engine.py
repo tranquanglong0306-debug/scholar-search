@@ -5,6 +5,7 @@
 from typing import List, Optional
 from core.models import Article, SearchResult
 from core.apis import semantic_scholar, crossref, openalex
+from core import indexing_check
 
 
 # Mapping tên nguồn → module adapter
@@ -31,6 +32,7 @@ def search(
     year_from: Optional[int] = None,
     year_to: Optional[int] = None,
     fields_of_study: Optional[str] = None,
+    indexing_filter: str = "Tất cả",    # "Tất cả" | "Scopus" | "Web of Science"
 ) -> SearchResult:
     """
     Hàm tìm kiếm chính — điều phối đến adapter phù hợp.
@@ -43,9 +45,10 @@ def search(
         year_from: Lọc từ năm
         year_to: Lọc đến năm
         fields_of_study: Lọc lĩnh vực (Semantic Scholar / OpenAlex)
+        indexing_filter: Bộ lọc chuẩn trích dẫn
 
     Returns:
-        SearchResult với danh sách Article
+        SearchResult với danh sách Article đã được lọc
     """
     if not query or not query.strip():
         return SearchResult(error="⚠️ Vui lòng nhập từ khóa tìm kiếm.")
@@ -81,12 +84,36 @@ def search(
                 fields_of_study=fields_of_study,
             )
         else:  # Crossref
-            return adapter.search_by_keyword(
+            result = adapter.search_by_keyword(
                 query,
                 limit=limit,
                 year_from=year_from,
                 year_to=year_to,
             )
+
+    # Nếu tìm kiếm thất bại, trả về ngay
+    if not result.success:
+        return result
+
+    # --- Bước Lọc & Gắn nhãn Scopus/WoS ---
+    filtered_articles = []
+    for article in result.articles:
+        # Gắn nhãn chuẩn
+        is_scopus, is_wos = indexing_check.check_indexing(article.journal, article.issn if hasattr(article, 'issn') else None)
+        article.is_scopus = is_scopus
+        article.is_wos = is_wos
+        
+        # Lọc theo yêu cầu
+        if indexing_filter == "Scopus" and not is_scopus:
+            continue
+        if indexing_filter == "Web of Science" and not is_wos:
+            continue
+            
+        filtered_articles.append(article)
+        
+    result.articles = filtered_articles
+    result.total_count = len(filtered_articles)
+    return result
 
 
 def deduplicate(articles: List[Article]) -> List[Article]:
