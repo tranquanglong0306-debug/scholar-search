@@ -290,25 +290,26 @@ with st.sidebar:
 
     st.divider()
 
-    # Phản hồi & Góp ý (QR Code)
+    # Phản hồi & Góp ý trực tiếp vào Database
     st.markdown("### 💡 Góp ý & Đề xuất")
     st.markdown("<small>Giúp ScholarSearch tốt hơn mỗi ngày!</small>", unsafe_allow_html=True)
     
-    form_url = "HÃY_THAY_LINK_GOOGLE_FORM_CỦA_ANH_VÀO_ĐÂY"
-    try:
-        qr = qrcode.QRCode(version=1, box_size=10, border=2)
-        qr.add_data(form_url)
-        qr.make(fit=True)
-        qr_img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Căn giữa ảnh QR
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.image(qr_img.get_image(), use_container_width=True)
-    except Exception as e:
-        pass
-        
-    st.markdown(f"<p style='text-align: center; font-size: 0.9rem;'>Quét mã QR hoặc <a href='{form_url}' target='_blank'>bấm vào đây</a> để gửi góp ý!</p>", unsafe_allow_html=True)
+    if st.session_state.get("logged_in"):
+        st.markdown(f"Xin chào **{st.session_state.username}**, bạn có góp ý gì không?")
+        with st.form("feedback_form", clear_on_submit=True):
+            feedback_text = st.text_area("Nội dung góp ý:", placeholder="Ví dụ: Cần thêm tính năng tải nhiều PDF...")
+            submit_btn = st.form_submit_button("Gửi góp ý", type="primary")
+            
+            if submit_btn:
+                if feedback_text.strip():
+                    if db.save_feedback(st.session_state.user_id, st.session_state.username, feedback_text):
+                        st.success("Cảm ơn bạn đã đóng góp ý kiến!")
+                    else:
+                        st.error("Có lỗi xảy ra, không thể gửi góp ý.")
+                else:
+                    st.warning("Vui lòng nhập nội dung góp ý.")
+    else:
+        st.info("Vui lòng đăng nhập để gửi góp ý trực tiếp trên hệ thống.")
 
     st.divider()
     st.caption(f"ScholarSearch v{Config.APP_VERSION}")

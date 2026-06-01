@@ -105,6 +105,18 @@ def init_db():
     )
     ''')
     
+    # Bảng góp ý (feedbacks)
+    execute_query(conn, '''
+    CREATE TABLE IF NOT EXISTS feedbacks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -234,5 +246,21 @@ def reset_password_with_otp(email: str, otp: str, new_password: str) -> tuple[bo
         return True, "Mật khẩu đã được đặt lại thành công! Bạn có thể đăng nhập."
     except Exception as e:
         return False, f"Lỗi đổi mật khẩu: {e}"
+    finally:
+        conn.close()
+
+# ---------------------------------------------------------------
+# Góp ý & Đề xuất (Feedbacks)
+# ---------------------------------------------------------------
+
+def save_feedback(user_id: int, username: str, content: str) -> bool:
+    conn = get_connection()
+    try:
+        execute_query(conn, "INSERT INTO feedbacks (user_id, username, content) VALUES (?, ?, ?)", (user_id, username, content))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Lỗi lưu feedback: {e}")
+        return False
     finally:
         conn.close()
