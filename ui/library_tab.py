@@ -22,7 +22,7 @@ def _render_library_card(article: Article, index: int, citation_style: str) -> b
         <div class="article-card animate-card" style="animation-delay: {delay}s;">
             <div class="article-title">
                 <span style="color:#6c63ff;font-size:0.85rem;font-weight:600;">#{index + 1}</span>
-                {'&nbsp;<a href="' + article.url + '" target="_blank">' + article.title + '</a>' if article.url else '&nbsp;' + article.title}
+                {f'&nbsp;<a href="{article.pdf_url if getattr(article, "pdf_url", "") else article.url}" target="_blank">{article.title}</a>' if (getattr(article, "pdf_url", "") or article.url) else f'&nbsp;{article.title}'}
             </div>
             <div class="article-meta">
                 <span class="meta-badge badge-year">📅 {article.display_year}</span>

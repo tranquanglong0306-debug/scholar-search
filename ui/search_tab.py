@@ -17,8 +17,9 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
     key = f"search_{article.internal_id}_{index}"
 
     with st.container():
-        # Tiêu đề bài báo (Sử dụng thẻ <a> HTML thay vì Markdown vì nó nằm trong block HTML)
-        title_link = f"<a href='{article.url}' target='_blank'>{article.title}</a>" if article.url else article.title
+        # Tiêu đề bài báo (Nếu là bản free, ưu tiên link PDF trực tiếp khi click vào tiêu đề)
+        target_url = article.pdf_url if getattr(article, "pdf_url", "") else article.url
+        title_link = f"<a href='{target_url}' target='_blank'>{article.title}</a>" if target_url else article.title
         # Xây dựng các thẻ HTML cẩn thận để tránh lỗi khoảng trắng của Streamlit Markdown
         scopus_text = f"🌟 Scopus ({getattr(article, 'scopus_q')})" if getattr(article, 'scopus_q', '').strip() else "🌟 Scopus"
         wos_text = f"🏆 WoS ({getattr(article, 'wos_q')})" if getattr(article, 'wos_q', '').strip() else "🏆 WoS"
