@@ -19,23 +19,21 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
     with st.container():
         # Tiêu đề bài báo (Sử dụng thẻ <a> HTML thay vì Markdown vì nó nằm trong block HTML)
         title_link = f"<a href='{article.url}' target='_blank'>{article.title}</a>" if article.url else article.title
-        st.markdown(f"""
-        <div class="article-card">
+        # Xây dựng các thẻ HTML cẩn thận để tránh lỗi khoảng trắng của Streamlit Markdown
+        scopus_badge = '<span class="meta-badge" style="background:#f97316; color:white;">🌟 Scopus</span>' if getattr(article, 'is_scopus', False) else ''
+        wos_badge = '<span class="meta-badge" style="background:#8b5cf6; color:white;">🏆 WoS</span>' if getattr(article, 'is_wos', False) else ''
+        journal_html = f'<div class="article-journal">📰 {article.journal}</div>' if article.journal else ''
+        tags_html = ('<div class="tag-cloud">' + ''.join(f'<span class="tag">{f}</span>' for f in article.fields_of_study[:4]) + '</div>') if article.fields_of_study else ''
+
+        html_content = f'''<div class="article-card">
             <div class="article-title">{title_link}</div>
-            <div class="article-meta">
-                <span class="meta-badge badge-year">📅 {article.display_year}</span>
-                <span class="meta-badge badge-source">🔍 {article.source}</span>
-                <span class="meta-badge badge-citations">📚 {article.citation_count:,} citations</span>
-                {'<span class="meta-badge" style="background:#f97316; color:white;">🌟 Scopus</span>' if getattr(article, 'is_scopus', False) else ''}
-                {'<span class="meta-badge" style="background:#8b5cf6; color:white;">🏆 WoS</span>' if getattr(article, 'is_wos', False) else ''}
-            </div>
+            <div class="article-meta"><span class="meta-badge badge-year">📅 {article.display_year}</span><span class="meta-badge badge-source">🔍 {article.source}</span><span class="meta-badge badge-citations">📚 {article.citation_count:,} citations</span>{scopus_badge}{wos_badge}</div>
             <div class="article-authors">👤 {article.authors_str}</div>
-            {'<div class="article-journal">📰 ' + article.journal + '</div>' if article.journal else ''}
-            {('<div class="tag-cloud">' + 
-              ''.join(f'<span class="tag">{f}</span>' for f in article.fields_of_study[:4]) + 
-              '</div>') if article.fields_of_study else ''}
-        </div>
-        """, unsafe_allow_html=True)
+            {journal_html}
+            {tags_html}
+        </div>'''
+        
+        st.markdown(html_content, unsafe_allow_html=True)
 
         # Expand abstract và actions
         col_abs, col_add = st.columns([5, 1])
