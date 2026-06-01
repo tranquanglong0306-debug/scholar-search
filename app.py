@@ -17,6 +17,7 @@ from ui.styles import inject_css
 from ui.search_tab import render_search_tab
 from ui.library_tab import render_library_tab
 from ui.export_tab import render_export_tab
+from ui.ai_summary_tab import render_ai_summary_tab
 from config import Config
 from core import storage
 from core import db
@@ -65,6 +66,7 @@ def _init_session_state() -> None:
         "search_total": 0,          # Tổng kết quả từ API
         "active_tab": 0,            # Tab đang hiển thị
         "history_loaded": False,    # Cờ theo dõi lịch sử
+        "summary_usage_count": 0,   # Biến đếm số lần dùng AI tóm tắt
     }
     for key, default in defaults.items():
         if key not in st.session_state:
@@ -293,10 +295,11 @@ with st.sidebar:
 # ---------------------------------------------------------------
 # Navigation Tabs chính
 # ---------------------------------------------------------------
-tab_search, tab_library, tab_export = st.tabs([
+tab_search, tab_library, tab_export, tab_ai = st.tabs([
     f"🔍 Tìm kiếm",
     f"📚 Thư viện  ({lib_count})",
     f"📤 Xuất dữ liệu",
+    f"🤖 AI Tóm tắt",
 ])
 
 with tab_search:
@@ -307,3 +310,6 @@ with tab_library:
 
 with tab_export:
     render_export_tab()
+
+with tab_ai:
+    render_ai_summary_tab()
