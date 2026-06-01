@@ -19,6 +19,7 @@ from ui.search_tab import render_search_tab
 from ui.library_tab import render_library_tab
 from ui.export_tab import render_export_tab
 from ui.ai_summary_tab import render_ai_summary_tab
+from ui.feedback_tab import render_feedback_tab
 from config import Config
 from core import storage
 from core import db
@@ -288,30 +289,7 @@ with st.sidebar:
     - [Mendeley](https://www.mendeley.com/)
     """)
 
-    st.divider()
 
-    # Phản hồi & Góp ý trực tiếp vào Database
-    st.markdown("### 💡 Góp ý & Đề xuất")
-    st.markdown("<small>Giúp ScholarSearch tốt hơn mỗi ngày!</small>", unsafe_allow_html=True)
-    
-    if st.session_state.get("logged_in"):
-        st.markdown(f"Xin chào **{st.session_state.username}**, bạn có góp ý gì không?")
-        with st.form("feedback_form", clear_on_submit=True):
-            feedback_text = st.text_area("Nội dung góp ý:", placeholder="Ví dụ: Cần thêm tính năng tải nhiều PDF...")
-            submit_btn = st.form_submit_button("Gửi góp ý", type="primary")
-            
-            if submit_btn:
-                if feedback_text.strip():
-                    if db.save_feedback(st.session_state.user_id, st.session_state.username, feedback_text):
-                        st.success("Cảm ơn bạn đã đóng góp ý kiến!")
-                    else:
-                        st.error("Có lỗi xảy ra, không thể gửi góp ý.")
-                else:
-                    st.warning("Vui lòng nhập nội dung góp ý.")
-    else:
-        st.info("Vui lòng đăng nhập để gửi góp ý trực tiếp trên hệ thống.")
-
-    st.divider()
     st.caption(f"ScholarSearch v{Config.APP_VERSION}")
     st.caption("Made with ❤️ by Python + Streamlit")
 
@@ -319,11 +297,12 @@ with st.sidebar:
 # ---------------------------------------------------------------
 # Navigation Tabs chính
 # ---------------------------------------------------------------
-tab_search, tab_library, tab_export, tab_ai = st.tabs([
+tab_search, tab_library, tab_export, tab_ai, tab_feedback = st.tabs([
     f"🔍 Tìm kiếm",
     f"📚 Thư viện  ({lib_count})",
     f"📤 Xuất dữ liệu",
     f"🤖 AI Tóm tắt",
+    f"💡 Góp ý",
 ])
 
 with tab_search:
@@ -337,3 +316,6 @@ with tab_export:
 
 with tab_ai:
     render_ai_summary_tab()
+
+with tab_feedback:
+    render_feedback_tab()
