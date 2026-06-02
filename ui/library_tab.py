@@ -101,6 +101,26 @@ def _render_library_card(article: Article, index: int, citation_style: str) -> b
                 st.markdown(f"<div>{actions_html}</div>", unsafe_allow_html=True)
             if scihub_info:
                 st.markdown(scihub_info, unsafe_allow_html=True)
+
+            # Nút tự động tìm bản Free qua các APIs
+            if is_paywalled:
+                if st.button("🔍 Quét bản PDF Free tự động", key=f"scan_lib_{article.internal_id}_{index}", help="Tìm bản PDF công khai miễn phí qua OpenAlex, Semantic Scholar & Unpaywall"):
+                    with st.spinner("⏳ Đang quét tìm bản PDF công khai..."):
+                        from core import pdf_resolver
+                        found_pdf = pdf_resolver.auto_resolve_pdf(article.doi, article.title)
+                        if found_pdf:
+                            article.pdf_url = found_pdf
+                            # Cập nhật trong session state thư viện
+                            for lib_art in st.session_state.get("library", []):
+                                if lib_art.internal_id == article.internal_id:
+                                    lib_art.pdf_url = found_pdf
+                            # Lưu lại thư viện vào db
+                            from core import storage
+                            storage.save_library(st.session_state.user_id, st.session_state.library)
+                            st.toast("🎉 Đã tìm thấy bản PDF miễn phí trực tiếp!", icon="🔓")
+                            st.rerun()
+                        else:
+                            st.error("❌ Không tìm thấy bản PDF Open Access công khai của tài liệu này.")
                 
             citation = format_citation(article, citation_style)
             st.markdown(f"""

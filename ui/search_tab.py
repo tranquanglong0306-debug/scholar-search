@@ -113,6 +113,23 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
             if scihub_info:
                 st.markdown(scihub_info, unsafe_allow_html=True)
 
+            # Nút tự động tìm bản Free qua các APIs
+            if is_paywalled:
+                if st.button("🔍 Quét bản PDF Free tự động", key=f"scan_{key}", help="Tìm bản PDF công khai miễn phí qua OpenAlex, Semantic Scholar & Unpaywall"):
+                    with st.spinner("⏳ Đang quét tìm bản PDF công khai..."):
+                        from core import pdf_resolver
+                        found_pdf = pdf_resolver.auto_resolve_pdf(article.doi, article.title)
+                        if found_pdf:
+                            article.pdf_url = found_pdf
+                            # Cập nhật trong session state kết quả tìm kiếm
+                            for r_art in st.session_state.get("search_results", []):
+                                if r_art.internal_id == article.internal_id:
+                                    r_art.pdf_url = found_pdf
+                            st.toast("🎉 Đã tìm thấy bản PDF miễn phí trực tiếp!", icon="🔓")
+                            st.rerun()
+                        else:
+                            st.error("❌ Không tìm thấy bản PDF Open Access công khai của tài liệu này.")
+
             if article.has_abstract:
                 with st.expander("📖 Xem tóm tắt (Abstract)", expanded=False):
                     st.markdown(f"""
