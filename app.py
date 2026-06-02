@@ -82,11 +82,65 @@ _init_session_state()
 # Màn hình Đăng nhập / Đăng ký
 # ---------------------------------------------------------------
 if st.session_state.user_id is None:
-    st.markdown("<h1 style='text-align: center; margin-top: 50px;'>🎓 ScholarSearch</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #8892b0;'>Hệ thống tìm kiếm bài báo khoa học & quản lý trích dẫn đa người dùng.</p>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
+    col_left, col_right = st.columns([1.2, 0.8], gap="large")
+    
+    with col_left:
+        st.markdown("""
+        <div style="padding-right: 1rem;">
+            <h1 style='font-size: 3rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #a78bfa, #6c63ff, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>🎓 ScholarSearch</h1>
+            <p style='color: var(--text-secondary); font-size: 1.15rem; margin-bottom: 2rem;'>
+                Hệ thống tìm kiếm bài báo khoa học & quản lý trích dẫn đa ngành thông minh.
+            </p>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; line-height: 1;">🔎</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0; color: var(--accent-secondary); font-weight: 600;">Tìm kiếm thông minh (Ask Anything)</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            Gõ bất kỳ từ khóa (tiếng Việt/tiếng Anh), tác giả hay mã DOI. Trí tuệ nhân tạo (AI) sẽ tự động tối ưu hóa và dịch thuật truy vấn của bạn.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; line-height: 1;">🔓</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0; color: var(--accent-secondary); font-weight: 600;">Tự động tìm kiếm & tải PDF miễn phí</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            Tích hợp cơ chế quét đa nguồn (Unpaywall, OpenAlex, Semantic Scholar) để tìm kiếm và tải trực tiếp file PDF Open Access của các bài viết trả phí.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; line-height: 1;">🤖</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0; color: var(--accent-secondary); font-weight: 600;">AI Tóm tắt nội dung bằng tiếng Việt</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            Trích xuất nhanh mục tiêu (Objectives), phương pháp luận (Methodology) và kết quả chính (Key Findings) của tài liệu qua Google Gemini AI.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; line-height: 1;">📚</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0; color: var(--accent-secondary); font-weight: 600;">Thư viện cá nhân & Trích dẫn học thuật</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            Lưu trữ tài liệu yêu thích vào thư viện riêng tư. Hỗ trợ định dạng trích dẫn chuẩn APA 7th, MLA 9th, Chicago và xuất danh mục ra Excel/CSV.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_right:
+        st.markdown("<div style='height: 45px;'></div>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; margin-bottom: 1.5rem; color: var(--text-primary);'>Cổng Hệ Thống</h3>", unsafe_allow_html=True)
         tab_login, tab_register, tab_forgot = st.tabs(["🔑 Đăng nhập", "📝 Đăng ký", "❓ Quên mật khẩu"])
         
         with tab_login:
