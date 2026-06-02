@@ -30,11 +30,17 @@ def _render_article_card(article: Article, index: int, citation_style: str) -> N
         journal_html = f'<div class="article-journal">📰 {article.journal}</div>' if article.journal else ''
         tags_html = ('<div class="tag-cloud">' + ''.join(f'<span class="tag">{f}</span>' for f in article.fields_of_study[:4]) + '</div>') if article.fields_of_study else ''
 
-        # Tính toán delay cho hiệu ứng xuất hiện so le tối ưu (12ms/card, tối đa 150ms)
-        delay = min(index * 0.012, 0.15)
+        # Tính toán delay cho hiệu ứng xuất hiện so le tối ưu (chỉ chạy cho 10 card đầu tiên để tối ưu hiệu năng)
+        if index < 10:
+            delay = index * 0.015
+            card_class = "article-card animate-card"
+            style_attr = f' style="animation-delay: {delay}s;"'
+        else:
+            card_class = "article-card"
+            style_attr = ""
 
         html_content = (
-            f'<div class="article-card animate-card" style="animation-delay: {delay}s;">'
+            f'<div class="{card_class}"{style_attr}>'
             f'<div class="article-title">{title_link}</div>'
             f'<div class="article-meta"><span class="meta-badge badge-year">📅 {article.display_year}</span><span class="meta-badge badge-source">🔍 {article.source}</span><span class="meta-badge badge-citations">📚 {article.citation_count:,} citations</span>{scopus_badge}{wos_badge}{oa_badge}</div>'
             f'<div class="article-authors">👤 {article.authors_str}</div>'

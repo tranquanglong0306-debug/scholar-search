@@ -13,13 +13,19 @@ def _render_library_card(article: Article, index: int, citation_style: str) -> b
     """
     should_remove = False
 
-    # Tính toán delay tối ưu cho số lượng bài báo lớn (12ms mỗi card, tối đa 150ms)
-    delay = min(index * 0.012, 0.15)
+    # Tính toán delay tối ưu cho số lượng bài báo lớn (chỉ chạy cho 10 card đầu tiên để tối ưu hiệu năng)
+    if index < 10:
+        delay = index * 0.015
+        card_class = "article-card animate-card"
+        style_attr = f' style="animation-delay: {delay}s;"'
+    else:
+        card_class = "article-card"
+        style_attr = ""
 
     with st.container():
         # Header card
         st.markdown(f"""
-        <div class="article-card animate-card" style="animation-delay: {delay}s;">
+        <div class="{card_class}"{style_attr}>
             <div class="article-title">
                 <span style="color:#6c63ff;font-size:0.85rem;font-weight:600;">#{index + 1}</span>
                 {f'&nbsp;<a href="{article.direct_pdf_url if getattr(article, "pdf_url", "") else article.url}" target="_blank">{article.title}</a>' if (getattr(article, "pdf_url", "") or article.url) else f'&nbsp;{article.title}'}

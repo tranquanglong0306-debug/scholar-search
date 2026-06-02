@@ -78,11 +78,10 @@ html, body, .stApp {
     color: var(--text-primary) !important;
 }
 
-/* Page fade-in effect - Optimized to 0.35s for lightning responsiveness */
+/* Page fade-in effect - Removed to eliminate flickering during Streamlit runs */
 .main .block-container {
     padding: 1.5rem 2rem 3rem !important;
     max-width: 1200px !important;
-    animation: pageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ============================================================
@@ -168,10 +167,10 @@ html, body, .stApp {
     width: 5px;
 }
 
-/* Class to trigger staggered fade-in of cards */
+/* Class to trigger staggered fade-in of cards - optimized to 0.25s */
 .animate-card {
     opacity: 0;
-    animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: cardEntrance 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .article-title {
