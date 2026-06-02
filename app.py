@@ -63,6 +63,15 @@ def _init_session_state() -> None:
         st.session_state["user_id"] = saved_uid
         st.session_state["username"] = saved_uname
 
+    # Đồng bộ API Keys từ session state vào Config để các module khác sử dụng động
+    if "anthropic_api_key_ui" not in st.session_state:
+        st.session_state["anthropic_api_key_ui"] = Config.ANTHROPIC_API_KEY
+    Config.ANTHROPIC_API_KEY = st.session_state["anthropic_api_key_ui"]
+
+    if "gemini_api_key_ui" not in st.session_state:
+        st.session_state["gemini_api_key_ui"] = Config.GEMINI_API_KEY
+    Config.GEMINI_API_KEY = st.session_state["gemini_api_key_ui"]
+
     defaults = {
         "search_results": [],       # Kết quả tìm kiếm hiện tại
         "last_query": "",           # Truy vấn cuối
@@ -287,6 +296,28 @@ with st.sidebar:
         st.success(f"📚 {lib_count} bài trong thư viện")
     else:
         st.info("📂 Thư viện trống")
+
+    # Khung cấu hình API Keys trong Sidebar
+    with st.expander("🔑 Cấu hình API Keys", expanded=False):
+        st.caption("Thay đổi khóa trực tiếp để áp dụng ngay:")
+        
+        # Nhập Anthropic API Key
+        c_claude = st.session_state.get("anthropic_api_key_ui", Config.ANTHROPIC_API_KEY)
+        input_claude = st.text_input("Claude API Key:", value=c_claude, type="password")
+        if input_claude != c_claude:
+            st.session_state["anthropic_api_key_ui"] = input_claude
+            Config.ANTHROPIC_API_KEY = input_claude
+            st.toast("🔑 Đã cập nhật Claude API Key!", icon="✅")
+            st.rerun()
+            
+        # Nhập Gemini API Key
+        c_gemini = st.session_state.get("gemini_api_key_ui", Config.GEMINI_API_KEY)
+        input_gemini = st.text_input("Gemini API Key:", value=c_gemini, type="password")
+        if input_gemini != c_gemini:
+            st.session_state["gemini_api_key_ui"] = input_gemini
+            Config.GEMINI_API_KEY = input_gemini
+            st.toast("🔑 Đã cập nhật Gemini API Key!", icon="✅")
+            st.rerun()
 
     st.divider()
 

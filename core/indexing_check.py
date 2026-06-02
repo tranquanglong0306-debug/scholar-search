@@ -45,12 +45,13 @@ def _load_wos_dict() -> dict:
     return wos_dict
 
 @st.cache_data(ttl=2592000)  # Lưu cache trong 30 ngày
-def check_indexing_via_claude(journal_name: str, api_key: str) -> Tuple[bool, str, bool, str]:
+def check_indexing_via_claude(journal_name: str, api_key: str) -> Tuple[bool, str, bool, str] or None:
     """
     Gọi Claude API làm dự phòng thông minh khi không tra cứu được trong file CSV tĩnh.
+    Trả về None nếu có lỗi xảy ra để có thể chuyển sang phương án dự phòng tiếp theo.
     """
     if not api_key or not journal_name:
-        return False, "", False, ""
+        return None
     
     url = "https://api.anthropic.com/v1/messages"
     headers = {
@@ -98,10 +99,58 @@ Yêu cầu chỉ trả về duy nhất một chuỗi JSON có cấu trúc sau (k
                 bool(data.get("is_wos", False)),
                 str(data.get("wos_q", "")).strip().upper()
             )
+        else:
+            print(f"[Anthropic Claude API Error] Status {response.status_code} - Response: {response.text}")
+            return None
     except Exception as e:
         print(f"Lỗi kiểm tra Scopus/WoS qua Claude: {e}")
+        return None
+
+@st.cache_data(ttl=2592000)  # Lưu cache trong 30 ngày
+def check_indexing_via_gemini(journal_name: str, api_key: str) -> Tuple[bool, str, bool, str] or None:
+    """
+    Gọi Google Gemini API để kiểm tra danh mục Scopus/WoS của tạp chí khi Claude không khả dụng.
+    Trả về None nếu có lỗi xảy ra.
+    """
+    if not api_key or not journal_name:
+        return None
         
-    return False, "", False, ""
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        # Sử dụng gemini-2.5-flash để truy vấn nhanh và kinh tế
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        prompt = f"""Hãy kiểm tra xem tạp chí khoa học sau đây có nằm trong danh mục Scopus hoặc Web of Science (WoS) hay không.
+Tên tạp chí: "{journal_name}"
+
+Yêu cầu chỉ trả về duy nhất một chuỗi JSON có cấu trúc sau (không giải thích, không bọc trong markdown):
+{{
+  "is_scopus": true/false,
+  "scopus_q": "Q1" hoặc "Q2" hoặc "Q3" hoặc "Q4" hoặc "",
+  "is_wos": true/false,
+  "wos_q": "SSCI" hoặc "SCIE" hoặc "AHCI" hoặc "ESCI" hoặc ""
+}}
+"""
+        response = model.generate_content(prompt)
+        raw_text = response.text.strip()
+        
+        # Làm sạch markdown if needed
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].split("```")[0].strip()
+            
+        data = json.loads(raw_text)
+        return (
+            bool(data.get("is_scopus", False)),
+            str(data.get("scopus_q", "")).strip().upper(),
+            bool(data.get("is_wos", False)),
+            str(data.get("wos_q", "")).strip().upper()
+        )
+    except Exception as e:
+        print(f"Lỗi kiểm tra Scopus/WoS qua Gemini: {e}")
+        return None
 
 def check_indexing(journal_name: str, issn: str = None) -> Tuple[bool, str, bool, str]:
     """
@@ -128,6 +177,14 @@ def check_indexing(journal_name: str, issn: str = None) -> Tuple[bool, str, bool
         
     # 2. Sử dụng Claude API làm dự phòng thông minh (nếu được cấu hình)
     if Config.ANTHROPIC_API_KEY:
-        return check_indexing_via_claude(journal_name, Config.ANTHROPIC_API_KEY)
+        res = check_indexing_via_claude(journal_name, Config.ANTHROPIC_API_KEY)
+        if res is not None:
+            return res
+            
+    # 3. Sử dụng Gemini API làm dự phòng thứ hai (nếu Claude thất bại hoặc không cấu hình)
+    if Config.GEMINI_API_KEY:
+        res = check_indexing_via_gemini(journal_name, Config.GEMINI_API_KEY)
+        if res is not None:
+            return res
     
     return False, "", False, ""
