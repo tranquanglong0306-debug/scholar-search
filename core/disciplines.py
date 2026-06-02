@@ -85,6 +85,18 @@ DISCIPLINES = {
         "water resources sustainability",
         "air quality health impact",
         "urban green infrastructure"
+    ],
+    "Ngành học / Lĩnh vực khác": [
+        "research methodology",
+        "literature review",
+        "data analysis techniques",
+        "scientific writing",
+        "mixed methods study",
+        "statistical significance",
+        "qualitative research design",
+        "quantitative analysis",
+        "academic integrity publication",
+        "interdisciplinary study"
     ]
 }
 

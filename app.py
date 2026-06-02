@@ -262,6 +262,15 @@ with st.sidebar:
     # Khi đổi ngành học, lưu lại
     st.session_state["selected_discipline"] = selected_disp
     
+    custom_field = ""
+    if selected_disp == "Ngành học / Lĩnh vực khác":
+        custom_field = st.text_input("Nhập tên ngành (tiếng Anh):", 
+                                     placeholder="Ví dụ: Chemistry, Physics, Art...", 
+                                     key="custom_discipline_input")
+        # Đồng bộ từ tùy chọn nhập tay nếu user chưa click nút gợi ý
+        if "fields_filter" not in st.session_state or st.session_state.fields_filter == "" or st.session_state.fields_filter in ["Linguistics,Education", "Education", "Computer Science", "Economics,Business", "Medicine,Biology", "Sociology,Psychology,History", "Environmental Science,Ecology"]:
+            st.session_state.fields_filter = custom_field
+            
     # Ánh xạ tên ngành tiếng Việt sang tiếng Anh cho API nâng cao
     english_fields_map = {
         "Ngôn ngữ học ứng dụng & Ngoại ngữ": "Linguistics,Education",
@@ -273,13 +282,17 @@ with st.sidebar:
         "Môi trường & Sinh thái": "Environmental Science,Ecology"
     }
     
+    # Khi đổi ngành chính (không phải ngành khác), tự động đồng bộ sang bộ lọc nâng cao
+    if selected_disp != "Ngành học / Lĩnh vực khác":
+        st.session_state.fields_filter = english_fields_map.get(selected_disp, "")
+    
     # Gợi ý từ khóa tương ứng với ngành học được chọn
     st.markdown("### 💡 Từ khóa Gợi ý")
     suggested_kws = disciplines.get_keywords_by_discipline(selected_disp)
     for kw in suggested_kws:
         if st.button(f"🔸 {kw}", key=f"kw_{selected_disp}_{kw}", use_container_width=True):
             st.session_state.search_query = kw
-            st.session_state.fields_filter = english_fields_map.get(selected_disp, "")
+            st.session_state.fields_filter = custom_field if selected_disp == "Ngành học / Lĩnh vực khác" else english_fields_map.get(selected_disp, "")
             st.session_state.active_tab = 0
             st.rerun()
 
