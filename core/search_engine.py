@@ -59,6 +59,26 @@ def search(
 
     query = query.strip()
 
+    # --- Tự động phát hiện loại tìm kiếm (Smart Search / Ask Anything) ---
+    import re
+    # 1. Tự động phát hiện DOI
+    doi_match = re.search(r'(10\.\d{4,9}/[-._;()/:A-Z0-9]+)', query, re.IGNORECASE)
+    if doi_match:
+        search_type = "doi"
+        query = doi_match.group(1)
+    # 2. Tự động phát hiện Tác giả (tiền tố author: hoặc tác giả:)
+    elif query.lower().startswith("author:") or query.lower().startswith("tác giả:"):
+        search_type = "author"
+        if query.lower().startswith("author:"):
+            query = query[7:].strip()
+        else:
+            query = query[8:].strip()
+    # 3. Mặc định hoặc khi là keyword: Gọi AI dịch tiếng Việt -> tiếng Anh học thuật
+    elif search_type == "keyword" or search_type not in ["doi", "author"]:
+        search_type = "keyword"
+        from core import ai_service
+        query = ai_service.translate_and_expand_query(query)
+
     if search_type == "doi":
         return adapter.search_by_doi(query)
 

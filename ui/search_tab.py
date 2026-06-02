@@ -180,32 +180,23 @@ def render_search_tab() -> None:
         st.session_state.search_error = None
 
     # ---------------------------------------------------------------
-    # Thanh tìm kiếm
+    # Thanh tìm kiếm (Smart Search / Ask Anything)
     # ---------------------------------------------------------------
-    st.markdown("### 🔎 Tìm kiếm Bài báo Khoa học")
+    st.markdown("### 🔎 Tìm kiếm Học thuật Thông minh (Ask Anything)")
 
-    col_q, col_type, col_src = st.columns([3, 1.5, 1.5])
+    col_q, col_src = st.columns([4.5, 1.5])
 
     with col_q:
         query = st.text_input(
-            "Từ khóa / Tên tác giả / DOI",
-            placeholder="Ví dụ: task-based language teaching, Nation 2001, 10.1017/...",
+            "Nhập từ khóa, chủ đề, tác giả hoặc mã DOI bất kỳ...",
+            placeholder="Tìm gì cũng được (Ví dụ: trí tuệ nhân tạo, covid-19, author:Nation, 10.1186/...)",
             key="search_query",
             label_visibility="collapsed",
         )
 
-    with col_type:
-        search_type = st.selectbox(
-            "Loại tìm kiếm",
-            options=["Từ khóa", "Tác giả", "DOI"],
-            key="search_type",
-            label_visibility="collapsed",
-        )
-        search_type_map = {"Từ khóa": "keyword", "Tác giả": "author", "DOI": "doi"}
-
     with col_src:
         source = st.selectbox(
-            "Nguồn",
+            "Nguồn dữ liệu",
             options=search_engine.get_available_sources(),
             key="search_source",
             label_visibility="collapsed",
@@ -259,9 +250,17 @@ def render_search_tab() -> None:
 
     if search_clicked and query.strip():
         with st.spinner("⏳ Đang tìm kiếm..."):
+            import re
+            # Tự động nhận diện loại tìm kiếm để lưu vào lịch sử cho đúng
+            detected_type = "keyword"
+            if re.search(r'(10\.\d{4,9}/[-._;()/:A-Z0-9]+)', query, re.IGNORECASE):
+                detected_type = "doi"
+            elif query.lower().startswith("author:") or query.lower().startswith("tác giả:"):
+                detected_type = "author"
+
             result = search_engine.search(
                 query=query,
-                search_type=search_type_map[search_type],
+                search_type=detected_type,
                 source=source,
                 limit=limit,
                 year_from=int(year_from) if year_from else None,
@@ -276,7 +275,7 @@ def render_search_tab() -> None:
                 st.session_state.search_error = None
                 st.session_state.search_total = result.total_count
                 # Lưu vào lịch sử
-                storage.add_to_history(st.session_state.user_id, query, search_type_map[search_type], source, result.total_count)
+                storage.add_to_history(st.session_state.user_id, query, detected_type, source, result.total_count)
                 st.rerun()
             else:
                 st.session_state.search_error = result.error
