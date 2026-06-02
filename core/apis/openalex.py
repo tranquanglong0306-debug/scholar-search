@@ -151,6 +151,12 @@ def search_by_keyword(
     Tìm kiếm bài báo theo từ khóa qua OpenAlex Works API.
     Hỗ trợ lọc theo năm và lĩnh vực.
     """
+    # Ghép lĩnh vực nghiên cứu vào từ khóa tìm kiếm chính để OpenAlex trả về đúng chuyên ngành (tránh dùng concepts filter cũ bị lỗi 400)
+    if fields_of_study:
+        fields_clean = fields_of_study.replace(",", " ").strip()
+        if fields_clean:
+            query = f"{query} {fields_clean}"
+
     url = f"{Config.OPENALEX_BASE_URL}/works"
     params = _build_mailto_param()
     params.update({
@@ -167,10 +173,6 @@ def search_by_keyword(
         filters.append(f"publication_year:>{year_from - 1}")
     if year_to:
         filters.append(f"publication_year:<{year_to + 1}")
-
-    # Lọc theo lĩnh vực (tìm trong concept)
-    if fields_of_study:
-        filters.append(f"concepts.display_name.search:{fields_of_study}")
 
     if filters:
         params["filter"] = ",".join(filters)
