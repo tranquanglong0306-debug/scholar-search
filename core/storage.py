@@ -116,30 +116,14 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 SESSION_FILE = os.path.join(DATA_DIR, "active_session.json")
 
 def save_active_session(user_id: int, username: str):
-    """Lưu session đăng nhập hiện tại vào file JSON cục bộ."""
-    try:
-        if not os.path.exists(DATA_DIR):
-            os.makedirs(DATA_DIR)
-        with open(SESSION_FILE, "w", encoding="utf-8") as f:
-            json.dump({"user_id": user_id, "username": username}, f)
-    except Exception as e:
-        print(f"Lỗi lưu active session: {e}")
+    """Lưu session đăng nhập hiện tại vào file JSON cục bộ. (Đã vô hiệu hóa để bảo mật)"""
+    pass
 
 def load_active_session() -> tuple:
-    """Đọc session đăng nhập hiện tại từ file JSON cục bộ."""
-    if os.path.exists(SESSION_FILE):
-        try:
-            with open(SESSION_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("user_id"), data.get("username")
-        except Exception as e:
-            print(f"Lỗi đọc active session: {e}")
+    """Đọc session đăng nhập hiện tại từ file JSON cục bộ. (Đã vô hiệu hóa để bảo mật)"""
     return None, None
 
 def clear_active_session():
-    """Xóa file session đăng nhập cục bộ khi người dùng đăng xuất."""
-    if os.path.exists(SESSION_FILE):
-        try:
-            os.remove(SESSION_FILE)
-        except Exception as e:
-            print(f"Lỗi xóa active session: {e}")
+    """Xóa file session đăng nhập cục bộ khi người dùng đăng xuất. (Đã vô hiệu hóa để bảo mật)"""
+    pass
+
