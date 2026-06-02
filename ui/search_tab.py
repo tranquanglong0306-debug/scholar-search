@@ -206,7 +206,7 @@ def render_search_tab() -> None:
     # Bộ lọc nâng cao (collapsible)
     # ---------------------------------------------------------------
     with st.expander("⚙️ Bộ lọc nâng cao", expanded=False):
-        f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns([1, 1, 1, 1.2, 1.2])
+        f_col1, f_col2, f_col3, f_col4 = st.columns([1, 1, 1, 1.5])
         with f_col1:
             year_from = st.number_input("Từ năm", min_value=1900, max_value=2026,
                                          value=2000, step=1, key="year_from")
@@ -221,12 +221,6 @@ def render_search_tab() -> None:
                 "Định dạng trích dẫn",
                 options=get_available_styles(),
                 key="citation_style_search",
-            )
-        with f_col5:
-            indexing_filter = st.selectbox(
-                "Chuẩn quốc tế",
-                options=["Tất cả", "Scopus", "Web of Science"],
-                key="indexing_filter",
             )
 
         # Lĩnh vực mặc định cho Applied Linguistics
@@ -266,7 +260,7 @@ def render_search_tab() -> None:
                 year_from=int(year_from) if year_from else None,
                 year_to=int(year_to) if year_to else None,
                 fields_of_study=fields_input.strip() or None,
-                indexing_filter=indexing_filter,
+                indexing_filter="Tất cả",
             )
 
             if result.success:
@@ -294,47 +288,118 @@ def render_search_tab() -> None:
 
     if articles:
         total = st.session_state.get("search_total", len(articles))
-        scopus_count = sum(1 for a in articles if getattr(a, "is_scopus", False))
-        wos_count = sum(1 for a in articles if getattr(a, "is_wos", False))
+        scopus_articles = [a for a in articles if getattr(a, "is_scopus", False)]
+        wos_articles = [a for a in articles if getattr(a, "is_wos", False)]
         oa_count = sum(1 for a in articles if getattr(a, "is_open_access", False))
+        
         st.markdown(f"""
         <div class="stats-bar">
             <span class="stat-item">🔎 Truy vấn: <strong class="stat-number">«{st.session_state.last_query}»</strong></span>
-            <span class="stat-item">📄 Hiển thị: <strong class="stat-number">{len(articles)}</strong> / {total:,} kết quả</span>
-            <span class="stat-item">🌟 Scopus: <strong class="stat-number">{scopus_count}</strong></span>
-            <span class="stat-item">🏆 WoS: <strong class="stat-number">{wos_count}</strong></span>
+            <span class="stat-item">📄 Tổng số: <strong class="stat-number">{len(articles)}</strong> kết quả</span>
+            <span class="stat-item">🌟 Scopus: <strong class="stat-number">{len(scopus_articles)}</strong></span>
+            <span class="stat-item">🏆 WoS: <strong class="stat-number">{len(wos_articles)}</strong></span>
             <span class="stat-item">🟢 Open Access: <strong class="stat-number">{oa_count}</strong></span>
             <span class="stat-item">📚 Đã lưu: <strong class="stat-number">{len(st.session_state.get('library', []))}</strong></span>
         </div>
         """, unsafe_allow_html=True)
 
-        # Nút thêm tất cả
-        col_all, col_sort = st.columns([2, 2])
-        with col_all:
-            if st.button("➕ Thêm tất cả vào thư viện", key="add_all"):
-                library = st.session_state.get("library", [])
-                existing_ids = {a.internal_id for a in library}
-                existing_dois = {a.doi for a in library if a.doi}
-                added = 0
-                for art in articles:
-                    if art.internal_id not in existing_ids and \
-                       (not art.doi or art.doi not in existing_dois):
-                        library.append(art)
-                        existing_ids.add(art.internal_id)
-                        if art.doi:
-                            existing_dois.add(art.doi)
-                        added += 1
-                st.session_state.library = library
-                storage.save_library(st.session_state.user_id, library)
-                st.toast(f"✅ Đã thêm {added} bài vào thư viện!", icon="📚")
-                st.rerun()
-
-        st.divider()
-
-        # Render từng card
+        # Định dạng trích dẫn
         current_style = st.session_state.get("citation_style_search", "APA 7th")
-        for i, article in enumerate(articles):
-            _render_article_card(article, i, current_style)
+
+        # Tạo 3 tab riêng biệt hiển thị kết quả
+        tab_all_res, tab_scopus_res, tab_wos_res = st.tabs([
+            f"🔎 Tất cả ({len(articles)})",
+            f"🌟 Scopus ({len(scopus_articles)})",
+            f"🏆 Web of Science ({len(wos_articles)})"
+        ])
+
+        with tab_all_res:
+            if articles:
+                # Nút thêm tất cả vào thư viện cho tab Tất cả
+                if st.button("➕ Thêm tất cả vào thư viện", key="add_all_all"):
+                    library = st.session_state.get("library", [])
+                    existing_ids = {a.internal_id for a in library}
+                    existing_dois = {a.doi for a in library if a.doi}
+                    added = 0
+                    for art in articles:
+                        if art.internal_id not in existing_ids and \
+                           (not art.doi or art.doi not in existing_dois):
+                            library.append(art)
+                            existing_ids.add(art.internal_id)
+                            if art.doi:
+                                existing_dois.add(art.doi)
+                            added += 1
+                    st.session_state.library = library
+                    storage.save_library(st.session_state.user_id, library)
+                    st.toast(f"✅ Đã thêm {added} bài vào thư viện!", icon="📚")
+                    st.rerun()
+                st.divider()
+                for i, article in enumerate(articles):
+                    _render_article_card(article, i, current_style)
+            else:
+                st.markdown("<p style='text-align:center; color:var(--text-muted);'>Không có kết quả nào.</p>", unsafe_allow_html=True)
+
+        with tab_scopus_res:
+            if scopus_articles:
+                # Nút thêm tất cả bài Scopus vào thư viện
+                if st.button("➕ Thêm tất cả bài Scopus vào thư viện", key="add_all_scopus"):
+                    library = st.session_state.get("library", [])
+                    existing_ids = {a.internal_id for a in library}
+                    existing_dois = {a.doi for a in library if a.doi}
+                    added = 0
+                    for art in scopus_articles:
+                        if art.internal_id not in existing_ids and \
+                           (not art.doi or art.doi not in existing_dois):
+                            library.append(art)
+                            existing_ids.add(art.internal_id)
+                            if art.doi:
+                                existing_dois.add(art.doi)
+                            added += 1
+                    st.session_state.library = library
+                    storage.save_library(st.session_state.user_id, library)
+                    st.toast(f"✅ Đã thêm {added} bài thuộc chuẩn Scopus vào thư viện!", icon="📚")
+                    st.rerun()
+                st.divider()
+                for i, article in enumerate(scopus_articles):
+                    _render_article_card(article, i, current_style)
+            else:
+                st.markdown("""
+                <div class="empty-state">
+                    <span class="icon">🌟</span>
+                    <p>Không tìm thấy bài báo nào thuộc danh mục Scopus trong kết quả này.</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with tab_wos_res:
+            if wos_articles:
+                # Nút thêm tất cả bài WoS vào thư viện
+                if st.button("➕ Thêm tất cả bài WoS vào thư viện", key="add_all_wos"):
+                    library = st.session_state.get("library", [])
+                    existing_ids = {a.internal_id for a in library}
+                    existing_dois = {a.doi for a in library if a.doi}
+                    added = 0
+                    for art in wos_articles:
+                        if art.internal_id not in existing_ids and \
+                           (not art.doi or art.doi not in existing_dois):
+                            library.append(art)
+                            existing_ids.add(art.internal_id)
+                            if art.doi:
+                                existing_dois.add(art.doi)
+                            added += 1
+                    st.session_state.library = library
+                    storage.save_library(st.session_state.user_id, library)
+                    st.toast(f"✅ Đã thêm {added} bài thuộc chuẩn Web of Science vào thư viện!", icon="📚")
+                    st.rerun()
+                st.divider()
+                for i, article in enumerate(wos_articles):
+                    _render_article_card(article, i, current_style)
+            else:
+                st.markdown("""
+                <div class="empty-state">
+                    <span class="icon">🏆</span>
+                    <p>Không tìm thấy bài báo nào thuộc danh mục Web of Science trong kết quả này.</p>
+                </div>
+                """, unsafe_allow_html=True)
 
     elif not st.session_state.search_error and st.session_state.last_query:
         st.markdown("""
