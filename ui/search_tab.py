@@ -346,10 +346,14 @@ def render_search_tab() -> None:
         """, unsafe_allow_html=True)
 
     elif not st.session_state.last_query:
-        st.markdown("""
+        selected_disp = st.session_state.get("selected_discipline", "Ngôn ngữ học ứng dụng & Ngoại ngữ")
+        from core import disciplines
+        kws = disciplines.get_keywords_by_discipline(selected_disp)[:4]
+        kws_html = ", ".join(f"<em>{kw}</em>" for kw in kws)
+        st.markdown(f"""
         <div class="empty-state">
             <span class="icon">📚</span>
             <p>Nhập từ khóa để bắt đầu tìm kiếm.<br>
-            <small>Gợi ý: <em>task-based language teaching</em>, <em>second language acquisition</em>, <em>EFL vocabulary learning</em></small></p>
+            <small>Gợi ý ngành <strong>{selected_disp}</strong>: {kws_html}</small></p>
         </div>
         """, unsafe_allow_html=True)

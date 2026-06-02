@@ -191,9 +191,9 @@ if "library" not in st.session_state:
 st.markdown("""
 <div class="scholar-header">
     <h1>🎓 ScholarSearch</h1>
-    <p>Công cụ tìm kiếm bài báo khoa học & quản lý trích dẫn cho Luận văn</p>
+    <p>Công cụ Tìm kiếm Học thuật & Quản lý Trích dẫn Đa Ngành</p>
     <p style="margin-top:0.4rem; font-size:0.8rem; opacity:0.5;">
-        Nghiên cứu khoa học · Đồ án tốt nghiệp · Công bố quốc tế
+        Ngôn ngữ học · Giáo dục · CNTT · Kinh tế · Y học · Khoa học xã hội · Môi trường
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -244,30 +244,44 @@ with st.sidebar:
 
     st.divider()
 
-    # Gợi ý từ khóa cho Applied Linguistics
+    # Khung lựa chọn ngành nghề/lĩnh vực (Đa ngành)
+    st.markdown("### 🎓 Lĩnh vực nghiên cứu")
+    from core import disciplines
+    
+    # Lưu lĩnh vực được chọn vào session_state để đồng bộ
+    if "selected_discipline" not in st.session_state:
+        st.session_state["selected_discipline"] = disciplines.get_disciplines_list()[0]
+        
+    selected_disp = st.selectbox(
+        "Chọn Ngành học / Lĩnh vực:",
+        options=disciplines.get_disciplines_list(),
+        key="discipline_selector",
+        label_visibility="collapsed"
+    )
+    
+    # Khi đổi ngành học, lưu lại
+    st.session_state["selected_discipline"] = selected_disp
+    
+    # Ánh xạ tên ngành tiếng Việt sang tiếng Anh cho API nâng cao
+    english_fields_map = {
+        "Ngôn ngữ học ứng dụng & Ngoại ngữ": "Linguistics,Education",
+        "Giáo dục & Sư phạm": "Education",
+        "Khoa học máy tính & CNTT": "Computer Science",
+        "Kinh tế & Quản trị kinh doanh": "Economics,Business",
+        "Y học & Khoa học sức khỏe": "Medicine,Biology",
+        "Khoa học xã hội & Nhân văn": "Sociology,Psychology,History",
+        "Môi trường & Sinh thái": "Environmental Science,Ecology"
+    }
+    
+    # Gợi ý từ khóa tương ứng với ngành học được chọn
     st.markdown("### 💡 Từ khóa Gợi ý")
-    suggested_keywords = [
-        "task-based language teaching",
-        "second language acquisition",
-        "EFL vocabulary learning",
-        "communicative language teaching",
-        "language assessment",
-        "reading comprehension strategies",
-        "extensive reading",
-        "writing instruction EFL",
-        "teacher professional development",
-        "CALL computer-assisted language",
-        "grammar instruction",
-        "motivation language learning",
-        "cooperative learning EFL",
-        "content-based instruction",
-        "language anxiety",
-    ]
-
-    for kw in suggested_keywords:
-        if st.button(f"🔸 {kw}", key=f"kw_{kw}", use_container_width=True):
+    suggested_kws = disciplines.get_keywords_by_discipline(selected_disp)
+    for kw in suggested_kws:
+        if st.button(f"🔸 {kw}", key=f"kw_{selected_disp}_{kw}", use_container_width=True):
             st.session_state.search_query = kw
+            st.session_state.fields_filter = english_fields_map.get(selected_disp, "")
             st.session_state.active_tab = 0
+            st.rerun()
 
     st.divider()
 
