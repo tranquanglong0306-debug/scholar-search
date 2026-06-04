@@ -73,6 +73,11 @@ def _parse_article(work: dict) -> Article:
     source = primary_location.get("source") or {}
     journal = source.get("display_name", "")
 
+    # ISSN của tạp chí (dùng để match Scopus/WoS chính xác hơn)
+    issn_l = source.get("issn_l", "") or ""
+    issn_list = source.get("issn") or []
+    issn = issn_l or (issn_list[0] if issn_list else "")
+
     # Thông tin tạp chí chi tiết
     biblio = work.get("biblio") or {}
     volume = biblio.get("volume", "")
@@ -124,6 +129,7 @@ def _parse_article(work: dict) -> Article:
         year=int(year) if year else None,
         abstract=abstract,
         journal=journal,
+        issn=issn,
         volume=str(volume) if volume else "",
         issue=str(issue) if issue else "",
         pages=pages,

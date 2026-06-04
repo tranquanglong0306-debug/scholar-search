@@ -155,36 +155,79 @@ Yêu cầu chỉ trả về duy nhất một chuỗi JSON có cấu trúc sau (k
 def check_indexing(journal_name: str, issn: str = None) -> Tuple[bool, str, bool, str]:
     """
     Kiểm tra xem bài báo có thuộc Scopus hoặc WoS hay không.
+    Ưu tiên: ISSN match -> Tên chính xác -> Tên rút gọn -> API fallback
     Trả về: (is_scopus, scopus_q, is_wos, wos_q)
     """
-    if not journal_name:
+    if not journal_name and not issn:
         return False, "", False, ""
 
-    journal_lower = journal_name.strip().lower()
-    
     scopus_journals = _load_scopus_dict()
     wos_journals = _load_wos_dict()
-    
-    scopus_q = scopus_journals.get(journal_lower)
-    wos_q = wos_journals.get(journal_lower)
-    
+
+    scopus_q = None
+    wos_q = None
+
+    # --- 1. ISSN match (chính xác nhất) ---
+    if issn:
+        issn_clean = issn.strip().replace("-", "")
+        issn_key1 = f"issn:{issn.strip()}"
+        issn_key2 = f"issn:{issn_clean[:4]}-{issn_clean[4:]}" if len(issn_clean) >= 8 else ""
+        for key in [issn_key1, issn_key2]:
+            if key and scopus_q is None:
+                scopus_q = scopus_journals.get(key)
+            if key and wos_q is None:
+                wos_q = wos_journals.get(key)
+
+    # --- 2. Tên tạp chí chính xác + normalize ---
+    def _normalize(name: str) -> list:
+        """Trả về các biến thể tên cần thử."""
+        n = name.strip().lower()
+        variants = [n]
+        # & <-> and
+        if " & " in n:
+            variants.append(n.replace(" & ", " and "))
+        if " and " in n:
+            variants.append(n.replace(" and ", " & "))
+        # Bỏ "the " ở đầu
+        if n.startswith("the "):
+            stripped = n[4:].strip()
+            variants.append(stripped)
+            if " & " in stripped:
+                variants.append(stripped.replace(" & ", " and "))
+            if " and " in stripped:
+                variants.append(stripped.replace(" and ", " & "))
+        return variants
+
+    if journal_name and (scopus_q is None or wos_q is None):
+        for variant in _normalize(journal_name):
+            if scopus_q is None:
+                scopus_q = scopus_journals.get(variant)
+            if wos_q is None:
+                wos_q = wos_journals.get(variant)
+            if scopus_q is not None and wos_q is not None:
+                break
+
     is_scopus = scopus_q is not None
     is_wos = wos_q is not None
-    
-    # 1. Tra cứu nhanh trong file CSV tĩnh
+
+    # Chuẩn hóa WoS label
+    if is_wos and wos_q in ("", "WOS", "WoS", None):
+        wos_q = "WoS Core"
+
+    # Nếu đã tìm thấy ở bước tĩnh -> trả về ngay
     if is_scopus or is_wos:
         return is_scopus, scopus_q or "", is_wos, wos_q or ""
-        
-    # 2. Sử dụng Claude API làm dự phòng thông minh (nếu được cấu hình)
+
+    # --- 4. Claude API fallback ---
     if Config.ANTHROPIC_API_KEY:
-        res = check_indexing_via_claude(journal_name, Config.ANTHROPIC_API_KEY)
+        res = check_indexing_via_claude(journal_name or "", Config.ANTHROPIC_API_KEY)
         if res is not None:
             return res
-            
-    # 3. Sử dụng Gemini API làm dự phòng thứ hai (nếu Claude thất bại hoặc không cấu hình)
+
+    # --- 5. Gemini API fallback ---
     if Config.GEMINI_API_KEY:
-        res = check_indexing_via_gemini(journal_name, Config.GEMINI_API_KEY)
+        res = check_indexing_via_gemini(journal_name or "", Config.GEMINI_API_KEY)
         if res is not None:
             return res
-    
+
     return False, "", False, ""

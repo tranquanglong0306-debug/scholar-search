@@ -37,6 +37,7 @@ class Article:
 
     # Định danh học thuật
     doi: str = ""
+    issn: str = ""          # ISSN của tạp chí (dùng để match Scopus/WoS)
     url: str = ""
     pdf_url: str = ""  # Link PDF trực tiếp nếu là Open Access
     arxiv_id: str = ""
