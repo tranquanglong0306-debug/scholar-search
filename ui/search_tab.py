@@ -9,12 +9,12 @@ from citation.formatter import format_citation, get_available_styles
 from core import storage
 
 
-def _render_article_card(article: Article, index: int, citation_style: str) -> None:
+def _render_article_card(article: Article, index: int, citation_style: str, tab_prefix: str = "search") -> None:
     """
     Hiển thị một bài báo dưới dạng card đẹp với đầy đủ thông tin.
     """
-    # Tạo unique key từ internal_id
-    key = f"search_{article.internal_id}_{index}"
+    # Tạo unique key từ internal_id và tab_prefix để tránh trùng lặp giữa các tab
+    key = f"{tab_prefix}_{article.internal_id}_{index}"
 
     with st.container():
         # Tiêu đề bài báo (Nếu là bản free, ưu tiên link PDF trực tiếp khi click vào tiêu đề)
@@ -335,7 +335,7 @@ def render_search_tab() -> None:
                     st.rerun()
                 st.divider()
                 for i, article in enumerate(articles):
-                    _render_article_card(article, i, current_style)
+                    _render_article_card(article, i, current_style, tab_prefix="all")
             else:
                 st.markdown("<p style='text-align:center; color:var(--text-muted);'>Không có kết quả nào.</p>", unsafe_allow_html=True)
 
@@ -361,7 +361,7 @@ def render_search_tab() -> None:
                     st.rerun()
                 st.divider()
                 for i, article in enumerate(scopus_articles):
-                    _render_article_card(article, i, current_style)
+                    _render_article_card(article, i, current_style, tab_prefix="scopus")
             else:
                 st.markdown("""
                 <div class="empty-state">
@@ -392,7 +392,7 @@ def render_search_tab() -> None:
                     st.rerun()
                 st.divider()
                 for i, article in enumerate(wos_articles):
-                    _render_article_card(article, i, current_style)
+                    _render_article_card(article, i, current_style, tab_prefix="wos")
             else:
                 st.markdown("""
                 <div class="empty-state">

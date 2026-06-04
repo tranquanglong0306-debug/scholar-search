@@ -20,6 +20,8 @@ from ui.library_tab import render_library_tab
 from ui.export_tab import render_export_tab
 from ui.ai_summary_tab import render_ai_summary_tab
 from ui.feedback_tab import render_feedback_tab
+from ui.scopus_tab import render_scopus_tab
+from ui.wos_tab import render_wos_tab
 from config import Config
 from core import storage
 from core import db
@@ -425,8 +427,10 @@ with st.sidebar:
 # ---------------------------------------------------------------
 # Navigation Tabs chính
 # ---------------------------------------------------------------
-tab_search, tab_library, tab_export, tab_ai, tab_feedback = st.tabs([
+tab_search, tab_scopus, tab_wos, tab_library, tab_export, tab_ai, tab_feedback = st.tabs([
     f"🔍 Tìm kiếm",
+    f"🌟 Scopus",
+    f"🏆 Web of Science",
     f"📚 Thư viện  ({lib_count})",
     f"📤 Xuất dữ liệu",
     f"🤖 AI Tóm tắt",
@@ -435,6 +439,12 @@ tab_search, tab_library, tab_export, tab_ai, tab_feedback = st.tabs([
 
 with tab_search:
     render_search_tab()
+
+with tab_scopus:
+    render_scopus_tab()
+
+with tab_wos:
+    render_wos_tab()
 
 with tab_library:
     render_library_tab()
