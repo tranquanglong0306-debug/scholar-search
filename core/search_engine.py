@@ -80,15 +80,15 @@ def search(
         query = ai_service.translate_and_expand_query(query)
 
     if search_type == "doi":
-        return adapter.search_by_doi(query)
+        result = adapter.search_by_doi(query)
 
     elif search_type == "author":
-        return adapter.search_by_author(query, limit=limit)
+        result = adapter.search_by_author(query, limit=limit)
 
     else:  # keyword (mặc định)
         # Các adapters khác nhau có tham số khác nhau
         if source == "Semantic Scholar":
-            return adapter.search_by_keyword(
+            result = adapter.search_by_keyword(
                 query,
                 limit=limit,
                 year_from=year_from,
@@ -96,7 +96,7 @@ def search(
                 fields_of_study=fields_of_study,
             )
         elif source == "OpenAlex":
-            return adapter.search_by_keyword(
+            result = adapter.search_by_keyword(
                 query,
                 limit=limit,
                 year_from=year_from,
