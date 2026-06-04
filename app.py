@@ -112,6 +112,14 @@ if st.session_state.user_id is None:
             "    </div>\n"
             "  </div>\n"
             
+            "  <div style='background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(249, 115, 22, 0.1)); border: 1px solid rgba(124, 58, 237, 0.35); border-radius: var(--radius); padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;'>\n"
+            "    <div style='font-size: 1.8rem; line-height: 1;'>🌟</div>\n"
+            "    <div>\n"
+            "      <h4 style='margin: 0 0 0.25rem 0; color: #fb923c; font-weight: 700; display: flex; align-items: center; gap: 6px;'>Lọc & Tra cứu Scopus & WoS <span style='font-size: 0.7rem; background: #6c63ff; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 600;'>Độc quyền</span></h4>\n"
+            "      <p style='margin: 0; font-size: 0.85rem; color: var(--text-primary); line-height: 1.5;'>Tra cứu chuẩn xác qua cơ sở dữ liệu xác thực tĩnh hơn 170.000 tạp chí và đối khớp đa tầng bằng mã ISSN & Chuẩn hóa tên. Giúp phân loại bài báo chuẩn Scopus (Q1-Q4) và Web of Science.</p>\n"
+            "    </div>\n"
+            "  </div>\n"
+            
             "  <div style='background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;'>\n"
             "    <div style='font-size: 1.8rem; line-height: 1;'>🔓</div>\n"
             "    <div>\n"
@@ -252,6 +260,24 @@ st.markdown("""
     <p style="margin-top:0.4rem; font-size:0.8rem; opacity:0.5;">
         Ngôn ngữ học · Giáo dục · CNTT · Kinh tế · Y học · Khoa học xã hội · Môi trường
     </p>
+</div>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------------
+# Bản Cập nhật / Tính năng Mới (Thông báo)
+# ---------------------------------------------------------------
+st.markdown("""
+<div style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(249, 115, 22, 0.1));
+            border: 1px solid rgba(124, 58, 237, 0.35); border-radius: 10px;
+            padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: center;">
+    <div style="font-size: 1.5rem; line-height: 1;">🚀</div>
+    <div style="flex-grow: 1;">
+        <span style="font-size: 0.72rem; background: #6c63ff; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 8px; vertical-align: middle;">TÍNH NĂNG ĐỘC QUYỀN MỚI</span>
+        <strong style="color: #fb923c; font-size: 0.95rem;">Đã ra mắt chức năng lọc và tìm kiếm trực tiếp chuẩn quốc tế Scopus & Web of Science!</strong>
+        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">
+            Tra cứu chính xác qua cơ sở dữ liệu tĩnh cập nhật hơn 170.000 tạp chí và đối khớp đa tầng bằng mã ISSN & Chuẩn hóa tên. Hãy chuyển sang tab <strong>🌟 Scopus</strong> hoặc <strong>🏆 Web of Science</strong> ở menu dưới để trải nghiệm ngay.
+        </p>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
