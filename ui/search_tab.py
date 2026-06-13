@@ -389,9 +389,33 @@ def render_search_tab() -> None:
 
     if articles:
         total = st.session_state.get("search_total", len(articles))
-        scopus_articles = [a for a in articles if getattr(a, "is_scopus", False)]
-        wos_articles = [a for a in articles if getattr(a, "is_wos", False)]
-        oa_count = sum(1 for a in articles if getattr(a, "is_open_access", False))
+        
+        # --- Pre-retrieve sort & filter selection to compute lists ---
+        sort_option = st.session_state.get("search_sort_option", "Mặc định")
+        show_oa_only = st.session_state.get("filter_oa_only", False)
+        
+        # Apply sort
+        sorted_articles = list(articles)
+        if sort_option == "📅 Mới nhất":
+            sorted_articles.sort(key=lambda a: a.year or 0, reverse=True)
+        elif sort_option == "📊 Nhiều trích dẫn nhất":
+            sorted_articles.sort(key=lambda a: a.citation_count, reverse=True)
+        elif sort_option == "🌟 Scopus/Q1 trước":
+            sorted_articles.sort(key=lambda a: (
+                0 if getattr(a, 'scopus_q', '').strip() in ['Q1', 'Q2'] else
+                1 if getattr(a, 'is_scopus', False) or getattr(a, 'is_wos', False) else 2
+            ))
+        elif sort_option == "🔓 Open Access trước":
+            sorted_articles.sort(key=lambda a: 0 if getattr(a, 'is_open_access', False) else 1)
+
+        # Apply OA filter
+        if show_oa_only:
+            sorted_articles = [a for a in sorted_articles if getattr(a, 'is_open_access', False)]
+
+        # Get Scopus, WoS and OA subsets
+        scopus_articles = [a for a in sorted_articles if getattr(a, "is_scopus", False)]
+        wos_articles = [a for a in sorted_articles if getattr(a, "is_wos", False)]
+        oa_count = sum(1 for a in sorted_articles if getattr(a, "is_open_access", False))
         
         # Define tab labels and synchronize tab state
         tab_labels = [
@@ -448,26 +472,6 @@ def render_search_tab() -> None:
             )
         with filter_col:
             show_oa_only = st.checkbox("Chỉ Open Access", key="filter_oa_only")
-
-        # Apply sort
-        sorted_articles = list(articles)
-        if sort_option == "📅 Mới nhất":
-            sorted_articles.sort(key=lambda a: a.year or 0, reverse=True)
-        elif sort_option == "📊 Nhiều trích dẫn nhất":
-            sorted_articles.sort(key=lambda a: a.citation_count, reverse=True)
-        elif sort_option == "🌟 Scopus/Q1 trước":
-            sorted_articles.sort(key=lambda a: (
-                0 if getattr(a, 'scopus_q', '').strip() in ['Q1', 'Q2'] else
-                1 if getattr(a, 'is_scopus', False) or getattr(a, 'is_wos', False) else 2
-            ))
-        elif sort_option == "🔓 Open Access trước":
-            sorted_articles.sort(key=lambda a: 0 if getattr(a, 'is_open_access', False) else 1)
-
-        # Apply OA filter
-        if show_oa_only:
-            sorted_articles = [a for a in sorted_articles if getattr(a, 'is_open_access', False)]
-            scopus_articles = [a for a in sorted_articles if getattr(a, 'is_scopus', False)]
-            wos_articles = [a for a in sorted_articles if getattr(a, 'is_wos', False)]
 
         current_style = st.session_state.get("citation_style_search", "APA 7th")
 
