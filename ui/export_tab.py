@@ -26,41 +26,48 @@ def render_export_tab() -> None:
         st.markdown("""
         <div class="empty-state">
             <span class="icon">📭</span>
-            <p>Thư viện trống. Hãy thêm bài báo trước khi xuất.</p>
+            <p>Thư viện của bạn đang trống. Hãy tìm kiếm bài báo và lưu lại trước khi xuất dữ liệu.</p>
         </div>
         """, unsafe_allow_html=True)
         return
 
     # ---------------------------------------------------------------
-    # Chọn style trích dẫn
+    # Cấu hình phong cách & Thống kê nhanh
     # ---------------------------------------------------------------
-    col_opt1, col_opt2 = st.columns(2)
+    col_opt1, col_opt2 = st.columns([4, 2])
     with col_opt1:
         export_style = st.selectbox(
             "📝 Định dạng trích dẫn xuất ra",
             options=get_available_styles(),
             key="export_style",
+            help="Áp dụng định dạng trích dẫn này cho file Excel và Text (.txt)"
         )
     with col_opt2:
-        st.metric("📚 Số bài sẵn sàng xuất", len(library))
+        st.metric("📚 Thư viện hiện tại", f"{len(library)} bài viết")
 
-    st.divider()
+    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
     # ---------------------------------------------------------------
-    # Section 1: BibTeX
+    # Bố cục 4 cột xuất dữ liệu song song (Rút gọn & Tiện lợi)
     # ---------------------------------------------------------------
-    st.markdown("#### 📄 BibTeX (.bib) — Dùng cho Zotero, Mendeley, LaTeX")
-    st.markdown(
-        "_BibTeX là định dạng tiêu chuẩn được hỗ trợ bởi **Zotero**, **Mendeley**, "
-        "**JabRef** và **LaTeX**. Đây là lựa chọn tốt nhất để quản lý tài liệu._"
-    )
+    col_bib, col_xl, col_txt, col_csv = st.columns(4)
 
-    col_bib_dl, col_bib_prev = st.columns([1, 2])
-    with col_bib_dl:
+    # 1. BibTeX
+    with col_bib:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px; background: var(--bg-card); 
+                    border: 1px solid var(--border-color); border-radius: 8px; min-height: 110px;">
+            <div style="font-size: 1.8rem; margin-bottom: 6px;">📄</div>
+            <strong style="font-size: 0.9rem; color: var(--text-primary);">BibTeX (.bib)</strong>
+            <p style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Cho Zotero, Mendeley, LaTeX</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+        
         bib_bytes = export_bibtex_bytes(library)
         filename_bib = f"references_{datetime.now().strftime('%Y%m%d')}.bib"
         st.download_button(
-            label="⬇️ Tải BibTeX (.bib)",
+            label="⬇️ Tải file .bib",
             data=bib_bytes,
             file_name=filename_bib,
             mime="application/x-bibtex",
@@ -68,39 +75,22 @@ def render_export_tab() -> None:
             use_container_width=True,
         )
 
-        st.markdown(f"""
-        <div style="margin-top:0.5rem; padding:0.5rem 0.75rem;
-             background:rgba(52,211,153,0.08); border-radius:8px;
-             border:1px solid rgba(52,211,153,0.2); font-size:0.8rem;">
-            📁 <strong>{filename_bib}</strong><br>
-            📊 {len(library)} entries · {len(bib_bytes):,} bytes
+    # 2. Excel
+    with col_xl:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px; background: var(--bg-card); 
+                    border: 1px solid var(--border-color); border-radius: 8px; min-height: 110px;">
+            <div style="font-size: 1.8rem; margin-bottom: 6px;">📊</div>
+            <strong style="font-size: 0.9rem; color: var(--text-primary);">Excel (.xlsx)</strong>
+            <p style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Bảng dữ liệu & trích dẫn</p>
         </div>
         """, unsafe_allow_html=True)
-
-    with col_bib_prev:
-        with st.expander("👁️ Xem trước BibTeX", expanded=False):
-            bibtex_preview = export_bibtex(library[:3])  # Preview 3 entries đầu
-            if len(library) > 3:
-                bibtex_preview += f"\n\n% ... và {len(library) - 3} entries khác"
-            st.code(bibtex_preview, language="bibtex")
-
-    st.divider()
-
-    # ---------------------------------------------------------------
-    # Section 2: Excel
-    # ---------------------------------------------------------------
-    st.markdown("#### 📊 Excel (.xlsx) — Bảng dữ liệu đầy đủ")
-    st.markdown(
-        "_File Excel bao gồm **2 sheet**: (1) Metadata đầy đủ, "
-        f"(2) Danh sách trích dẫn **{export_style}** sẵn sàng copy._"
-    )
-
-    col_xl_dl, col_xl_info = st.columns([1, 2])
-    with col_xl_dl:
+        st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+        
         xl_bytes = export_excel_bytes(library, export_style)
         filename_xl = f"references_{datetime.now().strftime('%Y%m%d')}.xlsx"
         st.download_button(
-            label="⬇️ Tải Excel (.xlsx)",
+            label="⬇️ Tải file .xlsx",
             data=xl_bytes,
             file_name=filename_xl,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -108,65 +98,22 @@ def render_export_tab() -> None:
             use_container_width=True,
         )
 
-    with col_xl_info:
-        st.markdown(f"""
-        <div style="padding:0.75rem 1rem; background:var(--bg-card);
-             border:1px solid var(--border-color); border-radius:8px; font-size:0.85rem;">
-            <strong>📋 Nội dung file Excel:</strong><br>
-            • Sheet "Metadata": Tiêu đề, Tác giả, Năm, Tạp chí, DOI, Abstract, ...<br>
-            • Sheet "{export_style} Citations": Danh sách trích dẫn đã định dạng<br>
-            • Hỗ trợ tiếng Việt (UTF-8)
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.divider()
-
-    # ---------------------------------------------------------------
-    # Section 3: CSV
-    # ---------------------------------------------------------------
-    st.markdown("#### 📋 CSV (.csv) — Dữ liệu thô, tương thích mọi phần mềm")
-
-    col_csv_dl, col_csv_info = st.columns([1, 2])
-    with col_csv_dl:
-        csv_bytes = export_csv_bytes(library)
-        filename_csv = f"references_{datetime.now().strftime('%Y%m%d')}.csv"
-        st.download_button(
-            label="⬇️ Tải CSV (.csv)",
-            data=csv_bytes,
-            file_name=filename_csv,
-            mime="text/csv",
-            key="dl_csv",
-            use_container_width=True,
-        )
-
-    with col_csv_info:
+    # 3. References TXT
+    with col_txt:
         st.markdown("""
-        <div style="padding:0.75rem 1rem; background:var(--bg-card);
-             border:1px solid var(--border-color); border-radius:8px; font-size:0.85rem;">
-            <strong>📋 Mẹo sử dụng CSV:</strong><br>
-            • Mở bằng Excel: <em>Data → From Text/CSV</em><br>
-            • Import vào Zotero: <em>File → Import → CSV</em><br>
-            • Mã hóa UTF-8-BOM (hỗ trợ tiếng Việt trong Excel)
+        <div style="text-align: center; padding: 10px; background: var(--bg-card); 
+                    border: 1px solid var(--border-color); border-radius: 8px; min-height: 110px;">
+            <div style="font-size: 1.8rem; margin-bottom: 6px;">📝</div>
+            <strong style="font-size: 0.9rem; color: var(--text-primary);">Text (.txt)</strong>
+            <p style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Sắp xếp A-Z sẵn sàng copy</p>
         </div>
         """, unsafe_allow_html=True)
-
-    st.divider()
-
-    # ---------------------------------------------------------------
-    # Section 4: APA List (TXT)
-    # ---------------------------------------------------------------
-    st.markdown(f"#### 📝 Danh sách Tài liệu Tham khảo (.txt) — {export_style}")
-    st.markdown(
-        "_File text thuần chứa danh sách tài liệu tham khảo sắp xếp theo alphabet, "
-        "sẵn sàng copy vào Word/Google Docs._"
-    )
-
-    col_txt_dl, col_txt_prev = st.columns([1, 2])
-    with col_txt_dl:
+        st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+        
         txt_bytes = export_apa_txt_bytes(library, export_style)
         filename_txt = f"references_{export_style.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.txt"
         st.download_button(
-            label=f"⬇️ Tải References (.txt)",
+            label="⬇️ Tải file .txt",
             data=txt_bytes,
             file_name=filename_txt,
             mime="text/plain",
@@ -174,43 +121,81 @@ def render_export_tab() -> None:
             use_container_width=True,
         )
 
-    with col_txt_prev:
-        with st.expander(f"👁️ Xem trước danh sách {export_style}", expanded=True):
+    # 4. CSV
+    with col_csv:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px; background: var(--bg-card); 
+                    border: 1px solid var(--border-color); border-radius: 8px; min-height: 110px;">
+            <div style="font-size: 1.8rem; margin-bottom: 6px;">📋</div>
+            <strong style="font-size: 0.9rem; color: var(--text-primary);">CSV (.csv)</strong>
+            <p style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Dữ liệu thô đa năng</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+        
+        csv_bytes = export_csv_bytes(library)
+        filename_csv = f"references_{datetime.now().strftime('%Y%m%d')}.csv"
+        st.download_button(
+            label="⬇️ Tải file .csv",
+            data=csv_bytes,
+            file_name=filename_csv,
+            mime="text/csv",
+            key="dl_csv",
+            use_container_width=True,
+        )
+
+    st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+
+    # ---------------------------------------------------------------
+    # Bộ xem trước kết quả thông minh
+    # ---------------------------------------------------------------
+    st.markdown("##### 👁️ Xem trước nội dung xuất")
+    tab_prev_txt, tab_prev_bib = st.columns(2)
+    
+    with tab_prev_txt:
+        with st.expander(f"Xem trước trích dẫn ({export_style})", expanded=True):
             txt_preview = export_apa_txt(library, export_style)
             st.text_area(
                 label="",
                 value=txt_preview,
-                height=250,
+                height=150,
                 key="txt_preview",
                 label_visibility="collapsed",
             )
+            
+    with tab_prev_bib:
+        with st.expander("Xem trước BibTeX (.bib)", expanded=True):
+            bibtex_preview = export_bibtex(library[:3])
+            if len(library) > 3:
+                bibtex_preview += f"\n\n% ... và {len(library) - 3} tài liệu khác"
+            st.text_area(
+                label="",
+                value=bibtex_preview,
+                height=150,
+                key="bib_preview",
+                label_visibility="collapsed",
+            )
 
-    st.divider()
+    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
     # ---------------------------------------------------------------
-    # Hướng dẫn import vào Zotero / Mendeley
+    # Hướng dẫn nhanh import
     # ---------------------------------------------------------------
-    with st.expander("📘 Hướng dẫn import vào Zotero & Mendeley", expanded=False):
+    with st.expander("📘 Hướng dẫn nhập (Import) vào Zotero / Mendeley", expanded=False):
         col_z, col_m = st.columns(2)
         with col_z:
             st.markdown("""
             **🟠 Zotero**
-            1. Mở Zotero Desktop
-            2. Vào **File → Import...**
-            3. Chọn file `.bib` đã tải
-            4. Chọn "Place imported collections and items into new collection"
-            5. Click **Next** → **Done**
-
-            _Hoặc: Kéo thả file `.bib` trực tiếp vào Zotero_
+            1. Mở Zotero Desktop.
+            2. Chọn **File → Import...**
+            3. Chọn file `.bib` đã tải về.
+            4. Chọn "Place imported collections and items into new collection" → **Next** → **Done**.
+            *Hoặc kéo thả trực tiếp file `.bib` vào thư viện.*
             """)
         with col_m:
             st.markdown("""
             **🔵 Mendeley Reference Manager**
-            1. Mở Mendeley
-            2. Vào **File → Import → BibTeX (.bib)**
-            3. Chọn file `.bib` đã tải
-            4. Click **Open**
-            5. Bài báo sẽ xuất hiện trong "All Documents"
-
-            _Lưu ý: Mendeley cũng hỗ trợ import CSV_
+            1. Mở Mendeley Reference Manager.
+            2. Chọn **File → Import → BibTeX (.bib)**.
+            3. Chọn file `.bib` đã tải về và click **Open**.
             """)
