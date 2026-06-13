@@ -18,7 +18,7 @@ def _render_article_card(article: Article, index: int, citation_style: str, tab_
 
     with st.container():
         # Tiêu đề bài báo (Nếu là bản free, ưu tiên link PDF trực tiếp khi click vào tiêu đề)
-        target_url = article.direct_pdf_url if getattr(article, "pdf_url", "") else article.url
+        target_url = article.direct_pdf_url or getattr(article, "pdf_url", "") or article.url
         title_link = f"<a href='{target_url}' target='_blank'>{article.title}</a>" if target_url else article.title
         # Xây dựng các thẻ HTML cẩn thận để tránh lỗi khoảng trắng của Streamlit Markdown
         scopus_text = f"🌟 Scopus ({getattr(article, 'scopus_q')})" if getattr(article, 'scopus_q', '').strip() else "🌟 Scopus"
@@ -52,7 +52,7 @@ def _render_article_card(article: Article, index: int, citation_style: str, tab_
         st.markdown(html_content, unsafe_allow_html=True)
 
         # Expand abstract và actions
-        col_abs, col_add = st.columns([5, 1])
+        col_abs, col_copy, col_add = st.columns([4.5, 1.2, 1])
 
         with col_abs:
             # Các nút truy cập bài báo
@@ -146,6 +146,15 @@ def _render_article_card(article: Article, index: int, citation_style: str, tab_
             else:
                 st.caption("_Không có abstract._")
 
+        with col_copy:
+            # Sprint 1: Quick Copy APA Citation button
+            citation_quick = format_citation(article, citation_style)
+            st.markdown('<br>', unsafe_allow_html=True)
+            if st.button('📋 APA', key=f'copy_apa_{key}', help='Sao chép trích dẫn APA vào clipboard'):
+                st.session_state[f'copied_{key}'] = citation_quick.replace('*', '')
+                st.toast('✅ Đã copy trích dẫn APA!', icon='📋')
+            if st.session_state.get(f'copied_{key}'):
+                st.code(st.session_state[f'copied_{key}'], language=None)
         with col_add:
             # Kiểm tra bài đã được thêm vào thư viện chưa
             library = st.session_state.get("library", [])
@@ -165,6 +174,36 @@ def _render_article_card(article: Article, index: int, citation_style: str, tab_
                     st.rerun()
 
 
+@st.dialog("🚀 THÔNG BÁO CẬP NHẬT: TÌM KIẾM SCOPUS & WEB OF SCIENCE", width="large")
+def show_onboarding_modal() -> None:
+    st.markdown("""
+    ### 👋 Xin chào, Chúc mừng bạn đã quay lại với ScholarSearch!
+    
+    Chúng tôi xin giới thiệu bản cập nhật nâng cấp quan trọng với tính năng **Độc quyền & Duy nhất** giúp bạn tra cứu bài báo khoa học chuẩn quốc tế một cách dễ dàng và hiệu quả:
+    
+    ---
+    
+    #### 🌟 1. Tính năng Tìm kiếm & Phân loại Scopus / Web of Science (Unique Feature)
+    *   **Đối khớp chính xác bằng ISSN & Tên**: Hệ thống tự động đối khớp mã số ISSN tiêu chuẩn và tên tạp chí với danh mục hơn **170.000 tạp chí** uy tín toàn cầu.
+    *   **Phân hạng Q1-Q4 & WoS Core**: Tự động nhận diện phân hạng Scopus (Q1, Q2, Q3, Q4) và Web of Science Core Collection (SCIE, SSCI, AHCI, ESCI).
+    *   **Phân chia Tab kết quả trực quan**: Lọc nhanh các bài báo Scopus và Web of Science trong tích tắc bằng các tab kết quả chuyên biệt.
+    
+    ---
+    
+    #### 💡 2. Các nâng cấp trải nghiệm người dùng (UX/UI) mới:
+    *   **Recent Search Chips**: Click vào các từ khóa tìm kiếm gần đây ngay dưới thanh search để tìm kiếm nhanh.
+    *   **Clickable Stats Badges**: Click trực tiếp vào các chỉ số thống kê (Scopus, WoS) để chuyển nhanh đến tab kết quả tương ứng.
+    *   **Step-by-step Progress Indicator**: Trạng thái tìm kiếm chi tiết theo từng bước trực quan từ phân tích từ khóa đến đối khớp dữ liệu.
+    *   **📋 Copy APA Citation**: Sao chép nhanh trích dẫn APA 7th trực tiếp trên từng bài báo.
+    
+    ---
+    *Chúc bạn có những trải nghiệm nghiên cứu tuyệt vời cùng ScholarSearch!*
+    """)
+    if st.button("Bắt đầu khám phá ngay! 🚀", use_container_width=True, type="primary"):
+        st.session_state["show_onboarding"] = False
+        st.rerun()
+
+
 def render_search_tab() -> None:
     """
     Hiển thị toàn bộ nội dung Tab Tìm kiếm.
@@ -178,6 +217,15 @@ def render_search_tab() -> None:
         st.session_state.last_query = ""
     if "search_error" not in st.session_state:
         st.session_state.search_error = None
+
+    trigger_search = False
+    if st.session_state.get("trigger_search_from_chip", False):
+        trigger_search = True
+        st.session_state["trigger_search_from_chip"] = False
+
+    # Hiển thị onboarding modal nếu cần
+    if st.session_state.get("show_onboarding", False):
+        show_onboarding_modal()
 
     # ---------------------------------------------------------------
     # Thanh tìm kiếm (Smart Search / Ask Anything)
@@ -201,6 +249,36 @@ def render_search_tab() -> None:
             key="search_source",
             label_visibility="collapsed",
         )
+
+    # ---------------------------------------------------------------
+    # Recent search chips (Sprint 2 upgrade)
+    # ---------------------------------------------------------------
+    history = storage.load_history(st.session_state.user_id)
+    if history:
+        seen = set()
+        unique_hist = []
+        for h in history:
+            q_clean = h['query'].strip()
+            if q_clean and q_clean not in seen:
+                seen.add(q_clean)
+                unique_hist.append(h)
+                if len(unique_hist) >= 5:
+                    break
+        
+        if unique_hist:
+            cols_chips = st.columns([1] + [1.5] * len(unique_hist) + [4])
+            with cols_chips[0]:
+                st.markdown("<span style='font-size:0.75rem; color:var(--text-muted); display:inline-block; padding-top:6px;'>🕒 Gần đây:</span>", unsafe_allow_html=True)
+            for idx, h in enumerate(unique_hist):
+                label = h['query']
+                if len(label) > 15:
+                    label = label[:13] + "..."
+                with cols_chips[idx + 1]:
+                    if st.button(f"🔍 {label}", key=f"chip_{idx}_{h['query']}", help=f"Tìm lại: {h['query']}", use_container_width=True):
+                        st.session_state.search_query = h['query']
+                        st.session_state.search_source = h['source']
+                        st.session_state.trigger_search_from_chip = True
+                        st.rerun()
 
     # ---------------------------------------------------------------
     # Bộ lọc nâng cao (collapsible)
@@ -242,38 +320,61 @@ def render_search_tab() -> None:
         type="primary",
     )
 
-    if search_clicked and query.strip():
-        with st.spinner("⏳ Đang tìm kiếm..."):
-            import re
-            # Tự động nhận diện loại tìm kiếm để lưu vào lịch sử cho đúng
-            detected_type = "keyword"
-            if re.search(r'(10\.\d{4,9}/[-._;()/:A-Z0-9]+)', query, re.IGNORECASE):
-                detected_type = "doi"
-            elif query.lower().startswith("author:") or query.lower().startswith("tác giả:"):
-                detected_type = "author"
+    if (search_clicked or trigger_search) and query.strip():
+        status_box = st.empty()
+        progress_bar = st.progress(0)
 
-            result = search_engine.search(
-                query=query,
-                search_type=detected_type,
-                source=source,
-                limit=limit,
-                year_from=int(year_from) if year_from else None,
-                year_to=int(year_to) if year_to else None,
-                fields_of_study=fields_input.strip() or None,
-                indexing_filter="Tất cả",
-            )
+        def ui_status_callback(step: int, msg: str):
+            import time
+            progress_bar.progress(step / 4.0)
+            status_box.markdown(f"""
+            <div style="background: rgba(108, 99, 255, 0.08); border: 1px solid rgba(108, 99, 255, 0.3); 
+                        border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;
+                        display: flex; align-items: center; gap: 0.75rem;">
+                <div style="font-size: 1.25rem;">⏳</div>
+                <div>
+                    <span style="font-size: 0.72rem; color: var(--accent-secondary); font-weight: bold; text-transform: uppercase;">Bước {step} của 4</span>
+                    <div style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; margin-top: 2px;">{msg}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            time.sleep(0.4)
 
-            if result.success:
-                st.session_state.search_results = result.articles
-                st.session_state.last_query = query
-                st.session_state.search_error = None
-                st.session_state.search_total = result.total_count
-                # Lưu vào lịch sử
-                storage.add_to_history(st.session_state.user_id, query, detected_type, source, result.total_count)
-                st.rerun()
-            else:
-                st.session_state.search_error = result.error
-                st.session_state.search_results = []
+        import re
+        detected_type = "keyword"
+        if re.search(r'(10\.\d{4,9}/[-._;()/:A-Z0-9]+)', query, re.IGNORECASE):
+            detected_type = "doi"
+        elif query.lower().startswith("author:") or query.lower().startswith("tác giả:"):
+            detected_type = "author"
+
+        result = search_engine.search(
+            query=query,
+            search_type=detected_type,
+            source=source,
+            limit=limit,
+            year_from=int(year_from) if year_from else None,
+            year_to=int(year_to) if year_to else None,
+            fields_of_study=fields_input.strip() or None,
+            indexing_filter="Tất cả",
+            status_callback=ui_status_callback,
+        )
+
+        status_box.empty()
+        progress_bar.empty()
+
+        if result.success:
+            st.session_state.search_results = result.articles
+            st.session_state.last_query = query
+            st.session_state.search_error = None
+            st.session_state.search_total = result.total_count
+            # Reset active tab to default dynamic label
+            st.session_state["active_results_tab"] = f"📚 Tất cả ({len(result.articles)})"
+            # Lưu vào lịch sử
+            storage.add_to_history(st.session_state.user_id, query, detected_type, source, result.total_count)
+            st.rerun()
+        else:
+            st.session_state.search_error = result.error
+            st.session_state.search_results = []
 
     # ---------------------------------------------------------------
     # Hiển thị lỗi
@@ -292,26 +393,87 @@ def render_search_tab() -> None:
         wos_articles = [a for a in articles if getattr(a, "is_wos", False)]
         oa_count = sum(1 for a in articles if getattr(a, "is_open_access", False))
         
+        # Define tab labels and synchronize tab state
+        tab_labels = [
+            f"📚 Tất cả ({len(sorted_articles)})",
+            f"🌟 Scopus ({len(scopus_articles)})",
+            f"🏆 Web of Science ({len(wos_articles)})"
+        ]
+        
+        current_tab = st.session_state.get("active_results_tab")
+        if current_tab:
+            if current_tab.startswith("📚 Tất cả"):
+                st.session_state["active_results_tab"] = tab_labels[0]
+            elif current_tab.startswith("🌟 Scopus"):
+                st.session_state["active_results_tab"] = tab_labels[1]
+            elif current_tab.startswith("🏆 Web of Science"):
+                st.session_state["active_results_tab"] = tab_labels[2]
+            else:
+                st.session_state["active_results_tab"] = tab_labels[0]
+        else:
+            st.session_state["active_results_tab"] = tab_labels[0]
+
         st.markdown(f"""
-        <div class="stats-bar">
-            <span class="stat-item">🔎 Truy vấn: <strong class="stat-number">«{st.session_state.last_query}»</strong></span>
-            <span class="stat-item">📄 Tổng số: <strong class="stat-number">{len(articles)}</strong> kết quả</span>
-            <span class="stat-item">🌟 Scopus: <strong class="stat-number">{len(scopus_articles)}</strong></span>
-            <span class="stat-item">🏆 WoS: <strong class="stat-number">{len(wos_articles)}</strong></span>
-            <span class="stat-item">🟢 Open Access: <strong class="stat-number">{oa_count}</strong></span>
-            <span class="stat-item">📚 Đã lưu: <strong class="stat-number">{len(st.session_state.get('library', []))}</strong></span>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+            🔎 Truy vấn hiện tại: <strong style="color: var(--accent-secondary);">«{st.session_state.last_query}»</strong>
         </div>
         """, unsafe_allow_html=True)
 
+        stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
+        with stat_col1:
+            if st.button(f"📚 Tất cả ({len(sorted_articles)})", key="click_stat_all", use_container_width=True, help="Bấm để chuyển sang tab Tất cả"):
+                st.session_state["active_results_tab"] = tab_labels[0]
+                st.rerun()
+        with stat_col2:
+            if st.button(f"🌟 Scopus ({len(scopus_articles)})", key="click_stat_scopus", use_container_width=True, help="Bấm để chuyển sang tab Scopus"):
+                st.session_state["active_results_tab"] = tab_labels[1]
+                st.rerun()
+        with stat_col3:
+            if st.button(f"🏆 WoS ({len(wos_articles)})", key="click_stat_wos", use_container_width=True, help="Bấm để chuyển sang tab Web of Science"):
+                st.session_state["active_results_tab"] = tab_labels[2]
+                st.rerun()
+        with stat_col4:
+            st.button(f"🟢 Open Access ({oa_count})", key="click_stat_oa", use_container_width=True, disabled=True)
+
         # Định dạng trích dẫn
+
+        # --- SORT & FILTER controls (Sprint 1 upgrade) ---
+        sort_col, filter_col = st.columns([3, 1])
+        with sort_col:
+            sort_option = st.selectbox(
+                "Sắp xếp",
+                options=["Mặc định", "📅 Mới nhất", "📊 Nhiều trích dẫn nhất", "🌟 Scopus/Q1 trước", "🔓 Open Access trước"],
+                key="search_sort_option",
+                label_visibility="collapsed",
+            )
+        with filter_col:
+            show_oa_only = st.checkbox("Chỉ Open Access", key="filter_oa_only")
+
+        # Apply sort
+        sorted_articles = list(articles)
+        if sort_option == "📅 Mới nhất":
+            sorted_articles.sort(key=lambda a: a.year or 0, reverse=True)
+        elif sort_option == "📊 Nhiều trích dẫn nhất":
+            sorted_articles.sort(key=lambda a: a.citation_count, reverse=True)
+        elif sort_option == "🌟 Scopus/Q1 trước":
+            sorted_articles.sort(key=lambda a: (
+                0 if getattr(a, 'scopus_q', '').strip() in ['Q1', 'Q2'] else
+                1 if getattr(a, 'is_scopus', False) or getattr(a, 'is_wos', False) else 2
+            ))
+        elif sort_option == "🔓 Open Access trước":
+            sorted_articles.sort(key=lambda a: 0 if getattr(a, 'is_open_access', False) else 1)
+
+        # Apply OA filter
+        if show_oa_only:
+            sorted_articles = [a for a in sorted_articles if getattr(a, 'is_open_access', False)]
+            scopus_articles = [a for a in sorted_articles if getattr(a, 'is_scopus', False)]
+            wos_articles = [a for a in sorted_articles if getattr(a, 'is_wos', False)]
+
         current_style = st.session_state.get("citation_style_search", "APA 7th")
 
         # Tạo 3 tab riêng biệt hiển thị kết quả
-        tab_all_res, tab_scopus_res, tab_wos_res = st.tabs([
-            f"🔎 Tất cả ({len(articles)})",
-            f"🌟 Scopus ({len(scopus_articles)})",
-            f"🏆 Web of Science ({len(wos_articles)})"
-        ])
+        display_articles = sorted_articles
+        tab_all_res, tab_scopus_res, tab_wos_res = st.tabs(tab_labels, key="active_results_tab")
 
         with tab_all_res:
             if articles:
@@ -334,7 +496,7 @@ def render_search_tab() -> None:
                     st.toast(f"✅ Đã thêm {added} bài vào thư viện!", icon="📚")
                     st.rerun()
                 st.divider()
-                for i, article in enumerate(articles):
+                for i, article in enumerate(display_articles):
                     _render_article_card(article, i, current_style, tab_prefix="all")
             else:
                 st.markdown("<p style='text-align:center; color:var(--text-muted);'>Không có kết quả nào.</p>", unsafe_allow_html=True)
@@ -412,12 +574,26 @@ def render_search_tab() -> None:
     elif not st.session_state.last_query:
         selected_disp = st.session_state.get("selected_discipline", "Ngôn ngữ học ứng dụng & Ngoại ngữ")
         from core import disciplines
-        kws = disciplines.get_keywords_by_discipline(selected_disp)[:4]
-        kws_html = ", ".join(f"<em>{kw}</em>" for kw in kws)
+        kws = disciplines.get_keywords_by_discipline(selected_disp)
+        
         st.markdown(f"""
-        <div class="empty-state">
-            <span class="icon">📚</span>
-            <p>Nhập từ khóa để bắt đầu tìm kiếm.<br>
-            <small>Gợi ý ngành <strong>{selected_disp}</strong>: {kws_html}</small></p>
+        <div class="empty-state" style="padding: 2.5rem 1.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); margin-top: 1.5rem; box-shadow: var(--shadow-card);">
+            <div class="icon" style="font-size: 2.5rem; margin-bottom: 0.75rem;">📚</div>
+            <h4 style="margin-top: 0; color: var(--text-primary);">Bắt đầu Tra cứu Học thuật</h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Hãy nhập từ khóa, chủ đề, tên tác giả hoặc mã DOI ở thanh tìm kiếm phía trên.</p>
         </div>
         """, unsafe_allow_html=True)
+        
+        st.markdown(f"##### 💡 Gợi ý từ khóa cho ngành **{selected_disp}**:")
+        kws_to_show = kws[:4]
+        cols_kws = st.columns(len(kws_to_show))
+        for idx, kw in enumerate(kws_to_show):
+            with cols_kws[idx]:
+                if st.button(f"🔸 {kw}", key=f"empty_suggest_{idx}_{kw}", use_container_width=True):
+                    st.session_state.search_query = kw
+                    st.session_state.search_source = "OpenAlex"
+                    st.session_state.search_query_trigger = True
+                    st.rerun()
+
+
+

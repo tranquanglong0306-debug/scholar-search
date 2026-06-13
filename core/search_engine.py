@@ -33,6 +33,7 @@ def search(
     year_to: Optional[int] = None,
     fields_of_study: Optional[str] = None,
     indexing_filter: str = "Tất cả",    # "Tất cả" | "Scopus" | "Web of Science"
+    status_callback = None,
 ) -> SearchResult:
     """
     Hàm tìm kiếm chính — điều phối đến adapter phù hợp.
@@ -46,6 +47,7 @@ def search(
         year_to: Lọc đến năm
         fields_of_study: Lọc lĩnh vực (Semantic Scholar / OpenAlex)
         indexing_filter: Bộ lọc chuẩn trích dẫn
+        status_callback: Hàm callback hiển thị tiến trình trên UI (step, message)
 
     Returns:
         SearchResult với danh sách Article đã được lọc
@@ -73,11 +75,25 @@ def search(
             query = query[7:].strip()
         else:
             query = query[8:].strip()
+    
+    # --- Gọi callback bước 1: Tối ưu và phân tích truy vấn ---
+    if status_callback:
+        if search_type == "doi":
+            status_callback(1, f"Đang trích xuất và phân tích mã DOI: {query}")
+        elif search_type == "author":
+            status_callback(1, f"Đang nhận diện tìm kiếm tác giả: {query}")
+        else:
+            status_callback(1, f"Đang phân tích, tối ưu & dịch thuật từ khóa bằng AI: «{query}»")
+
     # 3. Mặc định hoặc khi là keyword: Gọi AI dịch tiếng Việt -> tiếng Anh học thuật
-    elif search_type == "keyword" or search_type not in ["doi", "author"]:
+    if search_type == "keyword" or search_type not in ["doi", "author"]:
         search_type = "keyword"
         from core import ai_service
         query = ai_service.translate_and_expand_query(query)
+
+    # --- Gọi callback bước 2: Gửi API ---
+    if status_callback:
+        status_callback(2, f"Đang gửi yêu cầu và tải dữ liệu từ {source} API...")
 
     if search_type == "doi":
         result = adapter.search_by_doi(query)
@@ -115,6 +131,10 @@ def search(
     if not result.success:
         return result
 
+    # --- Gọi callback bước 3: Phân hạng Scopus/WoS ---
+    if status_callback:
+        status_callback(3, "Đang đối khớp mã ISSN & chuẩn hóa tên với 170.000+ tạp chí chuẩn Scopus & Web of Science...")
+
     # --- Bước Lọc & Gắn nhãn Scopus/WoS ---
     filtered_articles = []
     for article in result.articles:
@@ -135,6 +155,11 @@ def search(
         
     result.articles = filtered_articles
     result.total_count = len(filtered_articles)
+
+    # --- Gọi callback bước 4: Hoàn tất ---
+    if status_callback:
+        status_callback(4, f"Hoàn tất! Đã xử lý thành công {len(filtered_articles)} bài báo.")
+
     return result
 
 
