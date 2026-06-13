@@ -61,6 +61,17 @@ def search(
 
     query = query.strip()
 
+    # --- Phát hiện tìm kiếm chính xác (nằm trong dấu nháy kép/đơn) ---
+    is_exact = False
+    exact_phrase = ""
+    # Hỗ trợ cả nháy kép/đơn thẳng và cong
+    starts_quote = query.startswith('"') or query.startswith("'") or query.startswith('“') or query.startswith('‘')
+    ends_quote = query.endswith('"') or query.endswith("'") or query.endswith('”') or query.endswith('’')
+    if starts_quote and ends_quote and len(query) > 2:
+        is_exact = True
+        exact_phrase = query[1:-1].strip()
+        query = f'"{exact_phrase}"' # Giữ nháy kép chuẩn để gửi lên API
+
     # --- Tự động phát hiện loại tìm kiếm (Smart Search / Ask Anything) ---
     import re
     # 1. Tự động phát hiện DOI
@@ -83,13 +94,17 @@ def search(
         elif search_type == "author":
             status_callback(1, f"Đang nhận diện tìm kiếm tác giả: {query}")
         else:
-            status_callback(1, f"Đang phân tích, tối ưu & dịch thuật từ khóa bằng AI: «{query}»")
+            if is_exact:
+                status_callback(1, f"Đang thiết lập tìm kiếm chính xác cụm từ: «{exact_phrase}»")
+            else:
+                status_callback(1, f"Đang phân tích, tối ưu & dịch thuật từ khóa bằng AI: «{query}»")
 
     # 3. Mặc định hoặc khi là keyword: Gọi AI dịch tiếng Việt -> tiếng Anh học thuật
     if search_type == "keyword" or search_type not in ["doi", "author"]:
         search_type = "keyword"
-        from core import ai_service
-        query = ai_service.translate_and_expand_query(query)
+        if not is_exact:
+            from core import ai_service
+            query = ai_service.translate_and_expand_query(query)
 
     # --- Gọi callback bước 2: Gửi API ---
     if status_callback:
@@ -138,6 +153,21 @@ def search(
     # --- Bước Lọc & Gắn nhãn Scopus/WoS ---
     filtered_articles = []
     for article in result.articles:
+        # Lọc tìm kiếm chính xác cục bộ để đảm bảo kết quả chứa cụm từ khóa học thuật
+        if is_exact:
+            phrase_lower = exact_phrase.lower()
+            title_text = (article.title or "").lower()
+            abstract_text = (getattr(article, "abstract", "") or "").lower()
+            authors_text = (getattr(article, "authors_str", "") or "").lower()
+            journal_text = (getattr(article, "journal", "") or "").lower()
+            
+            # Nếu cụm từ không xuất hiện ở bất cứ trường thông tin nào, bỏ qua bài viết
+            if phrase_lower not in title_text and \
+               phrase_lower not in abstract_text and \
+               phrase_lower not in authors_text and \
+               phrase_lower not in journal_text:
+                continue
+
         # Gắn nhãn chuẩn
         is_scopus, scopus_q, is_wos, wos_q = indexing_check.check_indexing(article.journal, article.issn if hasattr(article, 'issn') else None)
         article.is_scopus = is_scopus
